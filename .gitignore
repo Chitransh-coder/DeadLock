@@ -1,0 +1,15 @@
+# Ignore build artifacts
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+*.o
+*.obj
+*.exe
+*.pyc
+__pycache__/
+dist/
+*.egg-info/
+# Ignore IDE specific files
+.vscode/
+# Ignore Python virtual environments
+venv/
