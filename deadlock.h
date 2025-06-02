@@ -1,10 +1,13 @@
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <string>
-using namespace std;
 
 class DeadLock {
 public:
-    int init(string projectName);
+    // Starter function
+    void init(string projectName);
+    // File generators definiton
+    void notebookGenerate(string projectName);
+    void pyFileGenerate(string projectName);
+    void tomlGenerate(string projectName);
+    void gitignoreGenerate(string projectName);
+    void readmeGenerate(string projectName);
     };
