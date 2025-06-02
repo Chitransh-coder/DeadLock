@@ -3,7 +3,11 @@
 #include <iostream>
 using namespace std;
 
-int DeadLock::init(string projectName) {
+void DeadLock::init(string projectName) {
+
+}
+
+void DeadLock::notebookGenerate(string projectName) {
         string noteBookName = projectName + ".ipynb";
         ofstream noteBook(noteBookName);
     try {
@@ -41,10 +45,96 @@ int DeadLock::init(string projectName) {
         "\"nbformat\": 4,"
         "\"nbformat_minor\": 2\n"
         "}\n";
-        return 0;
+        noteBook.close();
     }
     catch(exception &e) {
-        cerr << e.what() << '\n';
-        return -1;
-            }
-        }
+        cerr << e.what() << endl;
+    }
+}
+
+void DeadLock::pyFileGenerate(string projectName) {
+    string pyfileName = projectName + ".py";
+    ofstream pyFile(pyfileName);
+    try {
+        pyFile << "print(\"Hello World!\")";
+        pyFile.close();
+    }
+    catch(const exception& e) {
+        cerr << e.what() << endl;
+    }
+    
+}
+
+void DeadLock::tomlGenerate(string projectName) {
+    string tomlfileName = "pyproject.toml";
+    ofstream tomlFile(tomlfileName);
+    try {
+        tomlFile << "[project]\n"
+        "name = \"" + projectName + "\""
+        "version = \"0.0.1\""
+        "description = \"Add project description\""
+        "readme = \"README.md\"";
+        tomlFile.close();
+    }
+    catch(const exception& e)
+    {
+        cerr << e.what() << endl;
+    }
+    
+}
+
+void DeadLock::gitignoreGenerate(string projectName) {
+    string gitignorefileName = ".gitignore";
+    ofstream gitFile(gitignorefileName);
+    try {
+        gitFile << 
+        "# Ignore Python virtual environments\n"
+        "venv/\n"
+        ".env\n"
+        ".venv\n"
+        "env/\n"
+        "venv/\n"
+        "ENV/\n"
+        "env.bak/\n"
+        "venv.bak/\n\n"
+        "# Ignore python cache\n"
+        "__pycache__/\n"
+        "*.py[cod]\n"
+        "*$py.class\n\n"
+        "# Ignore C shared objects\n"
+        ".so\n\n"
+        "# Ignore Distribution / Packaging items\n"
+        ".Python\n"
+        "build/\n"
+        "develop-eggs/\n"
+        "dist/\n"
+        "downloads/\n"
+        "eggs/\n"
+        ".eggs/\n"
+        "lib/\n"
+        "lib64/\n"
+        "parts/\n"
+        "sdist/\n"
+        "var/\n"
+        "wheels/\n"
+        "share/python-wheels/\n"
+        "*.egg-info/\n"
+        ".installed.cfg\n"
+        "*.egg\n"
+        "MANIFEST\n";
+        gitFile.close();
+    } catch(const exception& e) {
+        cerr << e.what() << endl;
+    }
+}
+
+void DeadLock::readmeGenerate(string projectName) {
+    string readmeFileName = "README.md";
+    ofstream readmeFile(readmeFileName);
+    try {
+        readmeFile << "# " + projectName + "\n";
+        readmeFile.close();
+    } catch(const exception& e) {
+        cerr << e.what() << endl;
+    }
+}
