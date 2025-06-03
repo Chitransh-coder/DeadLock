@@ -1,11 +1,18 @@
 #include "deadlock.h"
 #include <fstream>
-#include <fmt/format.h>
 #include <iostream>
 using namespace std;
 
 void DeadLock::init(string projectName) {
-    fmt::println("This is the output\n");
+    
+    cout << "This is the output" << endl;
+    // Generate all project files
+    notebookGenerate(projectName);
+    pyFileGenerate(projectName);
+    tomlGenerate(projectName);
+    gitignoreGenerate(projectName);
+    readmeGenerate(projectName);
+    cout << "Project " << projectName << " created successfully!" << endl;
 }
 
 void DeadLock::notebookGenerate(string projectName) {
