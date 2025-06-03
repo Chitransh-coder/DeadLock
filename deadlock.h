@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+using namespace std;
 
 class DeadLock {
 public:
@@ -10,4 +12,4 @@ public:
     void tomlGenerate(string projectName);
     void gitignoreGenerate(string projectName);
     void readmeGenerate(string projectName);
-    };
+};
