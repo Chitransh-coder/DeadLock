@@ -30,7 +30,7 @@ jobs:
         ctest --output-on-failure
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deadlock-executable
         path: build/DeadLock
