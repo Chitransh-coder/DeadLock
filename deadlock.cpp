@@ -1,10 +1,11 @@
 #include "deadlock.h"
 #include <fstream>
+#include <fmt/format.h>
 #include <iostream>
 using namespace std;
 
 void DeadLock::init(string projectName) {
-
+    fmt::println("This is the output\n");
 }
 
 void DeadLock::notebookGenerate(string projectName) {
