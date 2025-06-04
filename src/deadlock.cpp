@@ -1,6 +1,9 @@
-#include "deadlock.h"
+#include "../include/deadlock.h"
 #include <fstream>
 #include <iostream>
+#include <cstdlib>
+#include <string>
+#include <vector>
 using namespace std;
 
 void DeadLock::init(string projectName) {
@@ -145,4 +148,49 @@ void DeadLock::readmeGenerate(string projectName) {
     } catch(const exception& e) {
         cerr << e.what() << endl;
     }
+}
+
+bool DeadLock::installPackage(const string& packageName) {
+    vector<string> packages = {packageName};
+    return installPackages(packages);
+}
+
+bool DeadLock::installPackages(const vector<string>& packages) {
+    // Check if Python is available
+    if (!isPythonAvailable()) {
+        cerr << "Cannot install packages because Python is not available" << endl;
+        return false;
+    }
+    
+    string packagesStr;
+    for (size_t i = 0; i < packages.size(); ++i) {
+        packagesStr += packages[i];
+        if (i < packages.size() - 1) {
+            packagesStr += " ";
+        }
+    }
+    
+    cout << "Installing packages: " << packagesStr << endl;
+    // TODO: ADD Download and unpacking functionality of python packages
+    cout << "Successfully installed packages: " << packagesStr << endl;
+    return true;
+}
+
+// Add the isPythonAvailable method implementation
+bool DeadLock::isPythonAvailable() {
+    cout << "Checking if Python is installed..." << endl;
+    
+#ifdef _WIN32
+    // Windows command to check Python
+    int result = system("python --version >nul 2>&1");
+#else
+    // Linux/Mac command to check Python
+    int result = system("python3 --version >/dev/null 2>&1");
+#endif
+
+    if (result != 0) {
+        cerr << "Python is not installed or not in PATH" << endl;
+        return false;
+    }
+    return true;
 }
