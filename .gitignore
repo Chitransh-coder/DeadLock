@@ -4,9 +4,13 @@
 /CMakeCache.txt
 *.o
 *.obj
+_deps
 *.exe
 *.pyc
 __pycache__/
+*.vcxproj
+*.filters
+*.vcproject
 dist/
 *.egg-info/
 # Ignore IDE specific files
