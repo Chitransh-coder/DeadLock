@@ -1,5 +1,5 @@
 #include "../include/deadlock.h"
-#include "CLI/CLI.hpp"
+#include "../CLI/CLI.hpp"
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -19,7 +19,16 @@ int main(int argc, char** argv) {
         vector<string> packages;
         pip_cmd->add_option("packages", packages, "Package names to install")->required()->expected(1, -1);
         
-        CLI11_PARSE(app, argc, argv);
+        // Download PyPI packages command
+        CLI::App* download_cmd = app.add_subcommand("download", "Download Python packages from PyPI without installing");
+        vector<string> download_packages;
+        download_cmd->add_option("packages", download_packages, "Package names to download")->required()->expected(1, -1);
+        
+        // Get package info command
+        CLI::App* info_cmd = app.add_subcommand("info", "Get information about a Python package from PyPI");
+        string info_package;
+        info_cmd->add_option("package", info_package, "Package name to get information about")->required();
+          CLI11_PARSE(app, argc, argv);
         
         if (*create_cmd) {
             dl.init(project_name);
@@ -40,6 +49,41 @@ int main(int argc, char** argv) {
                 cout << "Successfully installed packages!" << endl;
             } else {
                 cerr << "Failed to install packages." << endl;
+                return 1;
+            }
+        }
+        else if (*download_cmd) {
+            cout << "Downloading packages from PyPI: ";
+            for (const auto& pkg : download_packages) {
+                cout << pkg << " ";
+            }
+            cout << endl;
+            
+            bool success = true;
+            for (const auto& pkg : download_packages) {
+                if (!dl.downloadPackage(pkg)) {
+                    cerr << "Failed to download package: " << pkg << endl;
+                    success = false;
+                }
+            }
+            
+            if (success) {
+                cout << "Successfully downloaded all packages!" << endl;
+            } else {
+                cerr << "Failed to download some packages." << endl;
+                return 1;
+            }
+        }
+        else if (*info_cmd) {
+            cout << "Getting information for package: " << info_package << endl;
+            
+            string version = dl.getLatestVersion(info_package);
+            if (!version.empty()) {
+                cout << "Package: " << info_package << endl;
+                cout << "Latest version: " << version << endl;
+                cout << "PyPI URL: https://pypi.org/project/" << info_package << "/" << endl;
+            } else {
+                cerr << "Failed to get information for package: " << info_package << endl;
                 return 1;
             }
         }
