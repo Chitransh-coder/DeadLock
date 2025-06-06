@@ -19,6 +19,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(CLI)
 
+set(CURL_INCLUDE_DIR "D:/Projects/vcpkg/installed/x64-windows/include")
+set(CURL_LIBRARY "D:/Projects/vcpkg/installed/x64-windows/lib/libcurl.lib")
+set(CURL_LIBRARIES ${CURL_LIBRARY})
+set(CURL_INCLUDE_DIRS ${CURL_INCLUDE_DIR})
+
 # Add Windows-specific configuration to prevent include errors
 if(WIN32)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
@@ -39,7 +44,23 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${INCLUDE_DIR}
     ${cli_SOURCE_DIR}/include
+    ${CURL_INCLUDE_DIRS}
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
+
+if(WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "D:/Projects/vcpkg/installed/x64-windows/bin/libcurl.dll"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+    
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "D:/Projects/vcpkg/installed/x64-windows/bin/zlib1.dll"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+endif()

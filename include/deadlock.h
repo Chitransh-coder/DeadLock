@@ -17,4 +17,9 @@ public:
     bool installPackage(const string& packageName);
     bool installPackages(const vector<string>& packages);
     bool isPythonAvailable();
+    
+    // Advanced PyPI functionality
+    string getPackageInfo(const string& packageName);
+    bool downloadPackage(const string& packageName, const string& version = "latest");
+    string getLatestVersion(const string& packageName);
 };
