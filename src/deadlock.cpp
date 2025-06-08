@@ -202,6 +202,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     if (res != CURLE_OK) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
     }
+    curl_easy_cleanup(curl);
+    return true;
 }
 
 bool DeadLock::installPackages(const vector<string>& packages) {
@@ -211,91 +213,14 @@ bool DeadLock::installPackages(const vector<string>& packages) {
     }
 
     for (const auto& package : packages) {
-        
-        // Query PyPI for package info
-        
-        // Parse the response to get the download URL for the source distribution
-        // Look for the source distribution (.tar.gz) in the URLs
-        json j;
-        try {
-            if (!json::accept(response)) {
-                throw exception();
-            }
-
-        } catch(const exception& e) {
-            cout << e.what() << endl;
+        string version = getLatestVersion(package);
+        if (!installPackage(package, version))
+        {
+            cerr << "Package not installed: " << package << endl;
+            return false;
         }
-
-        size_t urlsPos = response.find("\"urls\":");
-        if (urlsPos == string::npos) {
-            cerr << "No download URLs found for package: " << package << endl;
-            continue;
-        }
-        
-        size_t tarGzPos = response.find(".tar.gz", urlsPos);
-        if (tarGzPos == string::npos) {
-            cerr << "No source distribution found for package: " << package << endl;
-            continue;
-        }
-        
-        // Extract the download URL
-        size_t urlStart = response.rfind("\"url\": \"", tarGzPos) + 8;
-        size_t urlEnd = response.find("\"", urlStart);
-        string downloadUrl = response.substr(urlStart, urlEnd - urlStart);
-        
-        // Download the source package
-        cout << "Downloading source for " << package << "..." << endl;
-        string sourceFile = package + ".tar.gz";
-        
-        // Download to file
-        FILE* fp = fopen(sourceFile.c_str(), "wb");
-        if (!fp) {
-            cerr << "Failed to create file: " << sourceFile << endl;
-            continue;
-        }
-        
-        CURL* downloadCurl = curl_easy_init();
-        curl_easy_setopt(downloadCurl, CURLOPT_URL, downloadUrl.c_str());
-        curl_easy_setopt(downloadCurl, CURLOPT_WRITEFUNCTION, WriteToFile);
-        curl_easy_setopt(downloadCurl, CURLOPT_WRITEDATA, fp);
-        curl_easy_setopt(downloadCurl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(downloadCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-        
-        CURLcode downloadRes = curl_easy_perform(downloadCurl);
-        fclose(fp);
-        curl_easy_cleanup(downloadCurl);
-        
-        if (downloadRes != CURLE_OK) {
-            cerr << "Failed to download source: " << curl_easy_strerror(downloadRes) << endl;
-            continue;
-        }
-        
-        // Extract and build the package
-        cout << "Extracting and building " << package << "..." << endl;
-        
-        // Extract tar.gz
-        string extractCmd = "tar -xzf " + sourceFile;
-        if (system(extractCmd.c_str()) != 0) {
-            cerr << "Failed to extract " << sourceFile << endl;
-            continue;
-        }
-        
-        // Find the extracted directory 
-        string buildDir = package + "-*";
-        
-        // Build the package using setup.py
-        string buildCmd = "cd " + package + "-* && python setup.py build install";
-        int buildResult = system(buildCmd.c_str());
-        
-        if (buildResult != 0) {
-            cerr << "Failed to build package: " << package << endl;
-            continue;
-        }
-        
         cout << "Successfully installed " << package << endl;
     }
-    
-    curl_easy_cleanup(curl);
     return true;
 }
 
@@ -342,19 +267,19 @@ string DeadLock::getLatestVersion(const string& packageName) {
     } 
     // Parse JSON to extract version information
     try {
-    json j = json::parse(info);
-    if(j.contains("info")) {
-        if (j["info"].contains("version"))
-        {
-            return j["info"]["version"];
+        json j = json::parse(info);
+        if(j.contains("info")) {
+            if (j["info"].contains("version"))
+            {
+                return j["info"]["version"];
+            } else {
+                throw exception("error retrieving version. Retry or report an issue on GitHub.");
+            }
+        } else if (j.contains("version")) {
+            return j["version"];
         } else {
             throw exception("error retrieving version. Retry or report an issue on GitHub.");
         }
-    } else if (j.contains("version")) {
-        return j["version"];
-    } else {
-        throw exception("error retrieving version. Retry or report an issue on GitHub.");
-    }
     } catch(json::exception& e) {
         cerr << "error parsing json: " << e.what() << endl;
     } catch (exception& e) {
