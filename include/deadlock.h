@@ -13,13 +13,12 @@ public:
     void tomlGenerate(string projectName);
     void gitignoreGenerate(string projectName);
     void readmeGenerate(string projectName);
-    // PyPI package management
-    bool installPackage(const string& packageName);
-    bool installPackages(const vector<string>& packages);
-    bool isPythonAvailable();
     
-    // Advanced PyPI functionality
+    bool isPythonAvailable();
+    // PyPI package management
+    bool installPackage(const string& package, const string& version);
+    bool installPackages(const vector<string>& packages);
+    // Pypi package info retriever
     string getPackageInfo(const string& packageName);
-    bool downloadPackage(const string& packageName, const string& version = "latest");
     string getLatestVersion(const string& packageName);
 };

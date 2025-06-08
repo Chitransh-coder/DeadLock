@@ -18,6 +18,11 @@ FetchContent_Declare(
     GIT_TAG 4160d259d961cd393fd8d67590a8c7d210207348
 )
 FetchContent_MakeAvailable(CLI)
+FetchContent_Declare(json
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG v3.12.0
+)
+FetchContent_MakeAvailable(json)
 
 set(CURL_INCLUDE_DIR "D:/Projects/vcpkg/installed/x64-windows/include")
 set(CURL_LIBRARY "D:/Projects/vcpkg/installed/x64-windows/lib/libcurl.lib")
@@ -50,6 +55,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

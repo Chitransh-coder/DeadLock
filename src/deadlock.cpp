@@ -4,11 +4,16 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <../include/json.hpp>
 #include <../curl/curl.h>
-#include <filesystem>
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 #include <sstream>
 using namespace std;
-namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 // Callback function for writing data from curl
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
@@ -17,8 +22,17 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* use
 }
 
 void DeadLock::init(string projectName) {
-    
-    cout << "This is the output" << endl;
+    if (!isPythonAvailable())
+    {
+        cerr << "Python not available! Please download latest version from https://www.python.org/" << endl;
+        exit(1);
+    }
+// Check User OS
+#ifdef _WIN32
+    _mkdir(projectName.c_str());
+#else
+    mkdir(projectName.c_str(), 0755);
+#endif
     // Generate all project files
     notebookGenerate(projectName);
     pyFileGenerate(projectName);
@@ -32,40 +46,37 @@ void DeadLock::notebookGenerate(string projectName) {
         string noteBookName = projectName + ".ipynb";
         ofstream noteBook(noteBookName);
     try {
-        noteBook <<
-        "{\n"
-        "\"cells\":[\n"
-            "{\n"
-            "\"cell_type\": \"markdown\",\n"
-            "\"metadata\": {},\n"
-            "\"source\": [\n"
-                "\"# Hello World\"\n"
-            "]\n"
-            "}\n"
-            "],\n"
-        "\"metadata\": {\n"
-        "\"kernelspec\": {\n"
-        "\"display_name\": \"Python 3\",\n"
-        "\"language\": \"python\",\n"
-        "\"name\": \"python3\"\n"
-        "},\n"
-        "\"language_info\": {\n"
-        "\"codemirror_mode\": {\n"
-        "\"name\": \"ipython\",\n"
-        "\"version\": 3\n"
-        "},\n"
-        "\"file_extension\": \".py\",\n"
-        "\"mimetype\": \"text/x-python\",\n"
-        "\"name\": \"python\","
-        "\"nbconvert_exporter\": \"python\",\n"
-        "\"pygments_lexer\": \"ipython3\",\n"
-        "\"version\": 3.11\n"
-        "},\n"
-        "\"orig_nbformat\": 4\n"
-        "},\n"
-        "\"nbformat\": 4,"
-        "\"nbformat_minor\": 2\n"
-        "}\n";
+        json notebook = {
+            {"cells", {{
+            {"cell_type", "markdown"},
+            {"metadata", json::object()},
+            {"source", {"# Hello World"}}
+            }}},
+            {"metadata", {
+            {"kernelspec", {
+                {"display_name", "Python 3"},
+                {"language", "python"},
+                {"name", "python3"}
+            }},
+            {"language_info", {
+                {"codemirror_mode", {
+                {"name", "ipython"},
+                {"version", 3}
+                }},
+                {"file_extension", ".py"},
+                {"mimetype", "text/x-python"},
+                {"name", "python"},
+                {"nbconvert_exporter", "python"},
+                {"pygments_lexer", "ipython3"},
+                {"version", "3.11"}
+            }},
+            {"orig_nbformat", 4}
+            }},
+            {"nbformat", 4},
+            {"nbformat_minor", 2}
+        };
+        
+        noteBook << notebook.dump(4);
         noteBook.close();
     }
     catch(exception &e) {
@@ -154,15 +165,7 @@ void DeadLock::readmeGenerate(string projectName) {
     ofstream readmeFile(readmeFileName);
     try {
         readmeFile << "# " + projectName + "\n\n"
-                  << "Add project description here.\n\n"
-                  << "## Installation\n\n"
-                  << "```bash\n"
-                  << "pip install -e .\n"
-                  << "```\n\n"
-                  << "## Usage\n\n"
-                  << "```python\n"
-                  << "import " + projectName + "\n"
-                  << "```";
+        "Add project description here.\n";
         readmeFile.close();
     }
     catch(const exception& e) {
@@ -179,9 +182,26 @@ bool DeadLock::isPythonAvailable() {
     return result == 0;
 }
 
-bool DeadLock::installPackage(const string& packageName) {
-    vector<string> packages = {packageName};
-    return installPackages(packages);
+bool DeadLock::installPackage(const string& package,const string& version) {
+    // Initialize curl
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        cerr << "Failed to initialize libcurl." << endl;
+        return false;
+    }
+    string url = "https://pypi.org/pypi/" + package + "/json";
+    string response;
+        
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "DeadLock/1.0");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);        
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
+    }
 }
 
 bool DeadLock::installPackages(const vector<string>& packages) {
@@ -190,35 +210,22 @@ bool DeadLock::installPackages(const vector<string>& packages) {
         return false;
     }
 
-    // Initialize curl
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        cerr << "Failed to initialize libcurl." << endl;
-        return false;
-    }
-
     for (const auto& package : packages) {
-        cout << "Fetching package information for " << package << "..." << endl;
         
         // Query PyPI for package info
-        string url = "https://pypi.org/pypi/" + package + "/json";
-        string response;
-        
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "DeadLock/1.0");
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // For simplicity, disable SSL verification
-        
-        CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
-            continue;
-        }
         
         // Parse the response to get the download URL for the source distribution
         // Look for the source distribution (.tar.gz) in the URLs
+        json j;
+        try {
+            if (!json::accept(response)) {
+                throw exception();
+            }
+
+        } catch(const exception& e) {
+            cout << e.what() << endl;
+        }
+
         size_t urlsPos = response.find("\"urls\":");
         if (urlsPos == string::npos) {
             cerr << "No download URLs found for package: " << package << endl;
@@ -292,34 +299,39 @@ bool DeadLock::installPackages(const vector<string>& packages) {
     return true;
 }
 
-// Advanced PyPI functionality implementation
-
 string DeadLock::getPackageInfo(const string& packageName) {
     CURL* curl = curl_easy_init();
     string response;
-    
+    // Initialize curl
     if (!curl) {
         cerr << "Failed to initialize curl" << endl;
         return "";
     }
-    
+    // Set download URL
     string url = "https://pypi.org/pypi/" + packageName + "/json";
-    
+    // Set request to GET
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+    // Set input URL
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    // Callback to write data
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    // Response
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    // User Agent Header
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "DeadLock/1.0");
+    // Automatically follow redirects
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    // Don't verify SSL, for now
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    
+    // Perform API request
     CURLcode res = curl_easy_perform(curl);
+    // Clear memory
     curl_easy_cleanup(curl);
-    
+    // Check response
     if (res != CURLE_OK) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
         return "";
     }
-    
     return response;
 }
 
@@ -327,123 +339,30 @@ string DeadLock::getLatestVersion(const string& packageName) {
     string info = getPackageInfo(packageName);
     if (info.empty()) {
         return "";
-    }
-    
+    } 
     // Parse JSON to extract version information
-    // Simple JSON parsing - in production, consider using a proper JSON library like nlohmann/json
-    size_t infoStart = info.find("\"info\":{");
-    if (infoStart == string::npos) return "";
-    
-    // Find the version field within the info object
-    size_t versionStart = info.find("\"version\":", infoStart);
-    if (versionStart == string::npos) return "";
-    
-    // Skip to the actual value after the colon and any whitespace
-    versionStart = info.find("\"", versionStart + 10);
-    if (versionStart == string::npos) return "";
-    versionStart++; // Skip the opening quote
-    
-    // Find the closing quote
-    size_t versionEnd = info.find("\"", versionStart);
-    if (versionEnd == string::npos) return "";
-    
-    string version = info.substr(versionStart, versionEnd - versionStart);
-    return version;
-    size_t infoPos = info.find("\"info\"");
-    if (infoPos == string::npos) return "";
-    
-    size_t versionPos = info.find("\"version\":", infoPos);
-    if (versionPos == string::npos) return "";
-    
-    size_t valueStart = info.find("\"", versionPos + 10) + 1;
-    if (valueStart == string::npos) return "";
-    
-    size_t valueEnd = info.find("\"", valueStart);
-    if (valueEnd == string::npos) return "";
-    
-    return info.substr(valueStart, valueEnd - valueStart);
+    try {
+    json j = json::parse(info);
+    if(j.contains("info")) {
+        if (j["info"].contains("version"))
+        {
+            return j["info"]["version"];
+        } else {
+            throw exception("error retrieving version. Retry or report an issue on GitHub.");
+        }
+    } else if (j.contains("version")) {
+        return j["version"];
+    } else {
+        throw exception("error retrieving version. Retry or report an issue on GitHub.");
+    }
+    } catch(json::exception& e) {
+        cerr << "error parsing json: " << e.what() << endl;
+    } catch (exception& e) {
+        cerr << e.what() << endl;
+    }
 }
 
 // Function to download a file and save it to disk
 size_t WriteToFile(void* ptr, size_t size, size_t nmemb, FILE* stream) {
     return fwrite(ptr, size, nmemb, stream);
-}
-
-bool DeadLock::downloadPackage(const string& packageName, const string& version) {
-    string packageInfo = getPackageInfo(packageName);
-    if (packageInfo.empty()) {
-        cerr << "Failed to get package information for " << packageName << endl;
-        return false;
-    }
-    
-    string targetVersion = version;
-    if (version == "latest") {
-        targetVersion = getLatestVersion(packageName);
-        if (targetVersion.empty()) {
-            cerr << "Failed to determine latest version for " << packageName << endl;
-            return false;
-        }
-    }
-    
-    cout << "Downloading " << packageName << " version " << targetVersion << "..." << endl;
-    
-    // Create a download directory if it doesn't exist
-    fs::create_directory("downloads");
-    
-    // In a full implementation, we would parse the JSON to get the download URL
-    // Here, we'll construct a typical PyPI wheel URL for simplicity
-    // In reality, you should extract the URL from the PyPI API response
-    
-    // For demonstration purposes, we'll construct a direct download URL to the wheel file
-    // This won't work for all packages but serves as an example
-    string downloadUrl = "https://files.pythonhosted.org/packages/source/" + 
-                         packageName.substr(0, 1) + "/" + packageName + "/" +
-                         packageName + "-" + targetVersion + ".tar.gz";
-    
-    string outputFile = "downloads/" + packageName + "-" + targetVersion + ".tar.gz";
-    
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        cerr << "Failed to initialize curl" << endl;
-        return false;
-    }
-    
-    FILE* fp = fopen(outputFile.c_str(), "wb");
-    if (!fp) {
-        cerr << "Failed to create output file: " << outputFile << endl;
-        curl_easy_cleanup(curl);
-        return false;
-    }
-    
-    curl_easy_setopt(curl, CURLOPT_URL, downloadUrl.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteToFile);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "DeadLock/1.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    
-    CURLcode res = curl_easy_perform(curl);
-    long httpCode = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-    
-    fclose(fp);
-    curl_easy_cleanup(curl);
-    
-    if (res != CURLE_OK || httpCode != 200) {
-        cerr << "Failed to download package: " << curl_easy_strerror(res) 
-             << ", HTTP code: " << httpCode << endl;
-        
-        // If direct download fails, use pip
-        cout << "Falling back to pip installation..." << endl;
-        string cmd = "pip download -d downloads " + packageName + "==" + targetVersion;
-        int result = system(cmd.c_str());
-        
-        if (result != 0) {
-            cerr << "Failed to download package with pip" << endl;
-            return false;
-        }
-    }
-    
-    cout << "Successfully downloaded " << packageName << " to " << outputFile << endl;
-    return true;
 }
