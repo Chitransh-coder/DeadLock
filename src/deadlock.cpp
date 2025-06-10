@@ -182,16 +182,17 @@ bool DeadLock::isPythonAvailable() {
     return result == 0;
 }
 
+// Initialize curl
 bool DeadLock::installPackage(const string& package,const string& version) {
-    // Initialize curl
+    string downloadUrl;
+    bool foundCompatibleWheel = false;
+    string url = "https://pypi.org/pypi/" + package + "/" + version + "/json";
+    string response;
     CURL* curl = curl_easy_init();
     if (!curl) {
         cerr << "Failed to initialize libcurl." << endl;
         return false;
     }
-    string url = "https://pypi.org/pypi/" + package + "/json";
-    string response;
-        
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -199,10 +200,81 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);        
     CURLcode res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
     if (res != CURLE_OK) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
     }
-    curl_easy_cleanup(curl);
+    try {
+        json j = json::parse(response);
+        if (!j.contains("urls")) {
+            throw exception("Cannot find valid url to download package");
+        }
+        if (!j["urls"].contains("filename"))
+        {
+            throw exception("Cannot find correct version to download for Windows");
+        }
+#ifdef _WIN32
+        // Find Windows compatible wheel
+        for (const auto& urlInfo : j["urls"]) {
+            if (urlInfo.contains("filename") && urlInfo.contains("url")) {
+                string fileName = urlInfo["filename"];
+                if (fileName.find("win32.whl") != string::npos || 
+                    fileName.find("win_amd64.whl") != string::npos ||
+                    fileName.find("py3-none-any.whl") != string::npos ||
+                    fileName.find("py2.py3-none-any.whl") != string::npos) {
+                    downloadUrl = urlInfo["url"];
+                    foundCompatibleWheel = true;
+                    break;
+                }
+            }
+        }
+        if (!foundCompatibleWheel) {
+            throw exception("No Windows compatible wheel found for this package");
+        }
+
+#elif __APPLE__
+        if (urlInfo.contains("filename") && urlInfo.contains("url")) {
+                string fileName = urlInfo["filename"];
+                if (fileName.find("macosx_") != string::npos || 
+                    fileName.find("universal2.whl") != string::npos ||
+                    fileName.find("py3-none-any.whl") != string::npos ||
+                    fileName.find("py2.py3-none-any.whl") != string::npos) {
+                    downloadUrl = urlInfo["url"];
+                    foundCompatibleWheel = true;
+                    break;
+                }
+            }
+        }
+        if (!foundCompatibleWheel) {
+            throw exception("No Windows compatible wheel found for this package");
+        }
+        
+#else
+
+        if (urlInfo.contains("filename") && urlInfo.contains("url")) {
+                string fileName = urlInfo["filename"];
+                if (fileName.find("linux_x86_64.whl") != string::npos || 
+                    fileName.find("linux_aarch64.whl") != string::npos ||
+                    fileName.find("py3-none-any.whl") != string::npos ||
+                    fileName.find("py2.py3-none-any.whl") != string::npos) {
+                    downloadUrl = urlInfo["url"];
+                    foundCompatibleWheel = true;
+                    break;
+                }
+            }
+        }
+        if (!foundCompatibleWheel) {
+            throw exception("No Windows compatible wheel found for this package");
+        }
+
+#endif
+    } catch (json::exception& e) {
+        cerr << "Error parsing JSON" << e.what() << endl;
+        exit(1);
+    } catch(exception& e) {
+        cerr << "Error finding valid package" << e.what() << endl;
+        exit(1);
+    }
     return true;
 }
 
