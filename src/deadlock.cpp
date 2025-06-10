@@ -233,7 +233,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
         }
 
 #elif __APPLE__
-        if (urlInfo.contains("filename") && urlInfo.contains("url")) {
+        for (const auto& urlInfo : j["urls"]) {
+            if (urlInfo.contains("filename") && urlInfo.contains("url")) {
                 string fileName = urlInfo["filename"];
                 if (fileName.find("macosx_") != string::npos || 
                     fileName.find("universal2.whl") != string::npos ||
@@ -246,12 +247,12 @@ bool DeadLock::installPackage(const string& package,const string& version) {
             }
         }
         if (!foundCompatibleWheel) {
-            throw exception("No Windows compatible wheel found for this package");
+            throw exception("No macOS compatible wheel found for this package");
         }
         
 #else
-
-        if (urlInfo.contains("filename") && urlInfo.contains("url")) {
+        for (const auto& urlInfo : j["urls"]) {
+            if (urlInfo.contains("filename") && urlInfo.contains("url")) {
                 string fileName = urlInfo["filename"];
                 if (fileName.find("linux_x86_64.whl") != string::npos || 
                     fileName.find("linux_aarch64.whl") != string::npos ||
@@ -264,16 +265,63 @@ bool DeadLock::installPackage(const string& package,const string& version) {
             }
         }
         if (!foundCompatibleWheel) {
-            throw exception("No Windows compatible wheel found for this package");
+            throw exception("No Linux compatible wheel found for this package");
+        }
+#endif
+
+        // Create downloads directory
+#ifdef _WIN32
+        _mkdir("downloads");
+#else
+        mkdir("downloads", 0755);
+#endif
+
+        // Extract filename from URL
+        string wheelFileName = downloadUrl.substr(downloadUrl.find_last_of('/') + 1);
+        string outputPath = "downloads/" + wheelFileName;
+
+        // Download the wheel file
+        cout << "Downloading " << wheelFileName << "..." << endl;
+        
+        FILE* fp = fopen(outputPath.c_str(), "wb");
+        if (!fp) {
+            cerr << "Failed to create output file: " << outputPath << endl;
+            return false;
         }
 
-#endif
+        CURL* downloadCurl = curl_easy_init();
+        if (!downloadCurl) {
+            cerr << "Failed to initialize curl for download" << endl;
+            fclose(fp);
+            return false;
+        }
+
+        curl_easy_setopt(downloadCurl, CURLOPT_URL, downloadUrl.c_str());
+        curl_easy_setopt(downloadCurl, CURLOPT_WRITEFUNCTION, WriteToFile);
+        curl_easy_setopt(downloadCurl, CURLOPT_WRITEDATA, fp);
+        curl_easy_setopt(downloadCurl, CURLOPT_USERAGENT, "DeadLock/1.0");
+        curl_easy_setopt(downloadCurl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(downloadCurl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+        CURLcode downloadRes = curl_easy_perform(downloadCurl);
+        long httpCode = 0;
+        curl_easy_getinfo(downloadCurl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+        fclose(fp);
+        curl_easy_cleanup(downloadCurl);
+
+        if (downloadRes != CURLE_OK || httpCode != 200) {
+            cerr << "Failed to download wheel: " << curl_easy_strerror(downloadRes) 
+                 << ", HTTP code: " << httpCode << endl;
+            return false;
+        }
+
     } catch (json::exception& e) {
         cerr << "Error parsing JSON" << e.what() << endl;
-        exit(1);
+        return false;
     } catch(exception& e) {
         cerr << "Error finding valid package" << e.what() << endl;
-        exit(1);
+        return false;
     }
     return true;
 }
