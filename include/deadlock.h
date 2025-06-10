@@ -18,6 +18,7 @@ public:
     // PyPI package management
     bool installPackage(const string& package, const string& version);
     bool installPackages(const vector<string>& packages);
+    bool downloadPackage(const string& package);
     // Pypi package info retriever
     string getPackageInfo(const string& packageName);
     string getLatestVersion(const string& packageName);

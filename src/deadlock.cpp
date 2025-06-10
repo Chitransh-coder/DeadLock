@@ -15,6 +15,8 @@
 using namespace std;
 using json = nlohmann::json;
 
+size_t WriteToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
+
 // Callback function for writing data from curl
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
     userp->append((char*)contents, size * nmemb);
@@ -344,6 +346,15 @@ bool DeadLock::installPackages(const vector<string>& packages) {
     return true;
 }
 
+bool DeadLock::downloadPackage(const string& package) {
+    string version = getLatestVersion(package);
+    if (version.empty()) {
+        cerr << "Failed to get latest version for package: " << package << endl;
+        return false;
+    }
+    return installPackage(package, version);
+}
+
 string DeadLock::getPackageInfo(const string& packageName) {
     CURL* curl = curl_easy_init();
     string response;
@@ -405,6 +416,7 @@ string DeadLock::getLatestVersion(const string& packageName) {
     } catch (exception& e) {
         cerr << e.what() << endl;
     }
+    return ""; // Default return for error cases
 }
 
 // Function to download a file and save it to disk
