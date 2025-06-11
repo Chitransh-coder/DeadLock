@@ -24,6 +24,12 @@ FetchContent_Declare(json
 )
 FetchContent_MakeAvailable(json)
 
+# Configure local zlib installation
+set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(ZLIB_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/lib/zd.lib)
+set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
+
 set(CURL_INCLUDE_DIR "D:/Projects/vcpkg/installed/x64-windows/include")
 set(CURL_LIBRARY "D:/Projects/vcpkg/installed/x64-windows/lib/libcurl.lib")
 set(CURL_LIBRARIES ${CURL_LIBRARY})
@@ -50,12 +56,21 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${INCLUDE_DIR}
     ${cli_SOURCE_DIR}/include
     ${CURL_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${ZLIB_LIBRARIES})
+
+# Link filesystem library for C++17
+if(WIN32)
+    # Windows doesn't need explicit filesystem linking
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+endif()
 
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -67,6 +82,12 @@ if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "D:/Projects/vcpkg/installed/x64-windows/bin/zlib1.dll"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+    
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/bin/zd.dll"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
 endif()
