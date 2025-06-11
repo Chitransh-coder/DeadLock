@@ -65,6 +65,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${ZLIB_LIBRARIES})
 
+# Link filesystem library for C++17
+if(WIN32)
+    # Windows doesn't need explicit filesystem linking
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+endif()
+
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
