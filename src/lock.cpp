@@ -23,11 +23,22 @@ int main(int argc, char** argv) {
         CLI::App* download_cmd = app.add_subcommand("download", "Download Python packages from PyPI without installing");
         vector<string> download_packages;
         download_cmd->add_option("packages", download_packages, "Package names to download")->required()->expected(1, -1);
-        
-        // Get package info command
+          // Get package info command
         CLI::App* info_cmd = app.add_subcommand("info", "Get information about a Python package from PyPI");
         string info_package;
         info_cmd->add_option("package", info_package, "Package name to get information about")->required();
+        
+        // Generate dead.lock file command
+        CLI::App* lock_cmd = app.add_subcommand("lock", "Generate or update dead.lock file");
+        
+        // Sync from dead.lock file command
+        CLI::App* sync_cmd = app.add_subcommand("sync", "Install packages from dead.lock file");
+        
+        // List installed packages command
+        CLI::App* list_cmd = app.add_subcommand("list", "List all installed packages from dead.lock file");
+        
+        // Validate dead.lock file command
+        CLI::App* validate_cmd = app.add_subcommand("validate", "Validate dead.lock file structure");
           CLI11_PARSE(app, argc, argv);
         
         if (*create_cmd) {
@@ -73,8 +84,7 @@ int main(int argc, char** argv) {
                 cerr << "Failed to download some packages." << endl;
                 return 1;
             }
-        }
-        else if (*info_cmd) {
+        }        else if (*info_cmd) {
             cout << "Getting information for package: " << info_package << endl;
             
             string version = dl.getLatestVersion(info_package);
@@ -84,6 +94,71 @@ int main(int argc, char** argv) {
                 cout << "PyPI URL: https://pypi.org/project/" << info_package << "/" << endl;
             } else {
                 cerr << "Failed to get information for package: " << info_package << endl;
+                return 1;
+            }
+        }
+        else if (*lock_cmd) {
+            cout << "Generating/updating dead.lock file..." << endl;
+            
+            if (dl.generateDeadLockFile(".")) {
+                cout << "Successfully generated dead.lock file!" << endl;
+            } else {
+                cerr << "Failed to generate dead.lock file." << endl;
+                return 1;
+            }
+        }
+        else if (*sync_cmd) {
+            cout << "Syncing packages from dead.lock file..." << endl;
+            
+            if (dl.syncFromDeadLock(".")) {
+                cout << "Successfully synced all packages!" << endl;
+            } else {
+                cerr << "Failed to sync packages from dead.lock file." << endl;
+                return 1;
+            }
+        }
+        else if (*list_cmd) {
+            cout << "Loading packages from dead.lock file..." << endl;
+            
+            if (dl.loadDeadLockFile(".")) {
+                vector<PackageDependency> packages = dl.getInstalledPackages();
+                
+                if (packages.empty()) {
+                    cout << "No packages found in dead.lock file." << endl;
+                } else {
+                    cout << "\nInstalled packages:" << endl;
+                    cout << "===================" << endl;
+                    
+                    for (const auto& pkg : packages) {
+                        cout << pkg.name << " @ " << pkg.version;
+                        if (pkg.isDev) {
+                            cout << " (dev)";
+                        }
+                        cout << "\n  Source: " << pkg.source << endl;
+                        cout << "  Install Date: " << pkg.installDate << endl;
+                        if (!pkg.dependencies.empty()) {
+                            cout << "  Dependencies: ";
+                            for (size_t i = 0; i < pkg.dependencies.size(); ++i) {
+                                cout << pkg.dependencies[i];
+                                if (i < pkg.dependencies.size() - 1) cout << ", ";
+                            }
+                            cout << endl;
+                        }
+                        cout << endl;
+                    }
+                }
+            } else {
+                cerr << "Failed to load dead.lock file." << endl;
+                return 1;
+            }
+        }
+        else if (*validate_cmd) {
+            cout << "Validating dead.lock file..." << endl;
+            
+            if (dl.validateDeadLockFile(".")) {
+                cout << "dead.lock file is valid!" << endl;
+            } else {
+                cerr << "dead.lock file validation failed." << endl;
                 return 1;
             }
         }
