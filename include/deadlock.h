@@ -25,7 +25,6 @@ public:
     void tomlGenerate(string projectName);
     void gitignoreGenerate(string projectName);
     void readmeGenerate(string projectName);
-    
     bool isPythonAvailable();
     // PyPI package management
     bool installPackage(const string& package, const string& version);

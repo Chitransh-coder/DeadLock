@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 #include "../include/json.hpp"
-#include "../curl/curl.h"
-#include <zlib.h>
+#include "../third_party/curl/curl.h"
+#include "../third_party/zlib/zlib.h"
 #include <sstream>
 #ifdef _WIN32
 #include <direct.h>
@@ -881,7 +881,7 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
             cerr << "Failed to create directory for: " << fullPath << endl;
             return false;
         }
-          // Extract and decompress file data
+        // Extract and decompress file data
         vector<unsigned char> decompressedData(max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
         
         if (compressionMethod == 0) {
@@ -1151,7 +1151,6 @@ string DeadLock::getCurrentTimestamp() const {
 }
 
 string DeadLock::calculatePackageHash(const string& packageName, const string& version) const {
-    // Simple hash calculation (in a real implementation, you'd use proper hashing)
     string combined = packageName + version;
     size_t hash = std::hash<string>{}(combined);
     return to_string(hash);

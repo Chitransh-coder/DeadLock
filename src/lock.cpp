@@ -1,5 +1,5 @@
 #include "../include/deadlock.h"
-#include "../CLI/CLI.hpp"
+#include <CLI/CLI.hpp>
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
         CLI::App* download_cmd = app.add_subcommand("download", "Download Python packages from PyPI without installing");
         vector<string> download_packages;
         download_cmd->add_option("packages", download_packages, "Package names to download")->required()->expected(1, -1);
-          // Get package info command
+        // Get package info command
         CLI::App* info_cmd = app.add_subcommand("info", "Get information about a Python package from PyPI");
         string info_package;
         info_cmd->add_option("package", info_package, "Package name to get information about")->required();

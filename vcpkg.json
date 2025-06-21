@@ -1,0 +1,10 @@
+{
+  "name": "deadlock",
+  "version": "1.0.0",
+  "description": "DeadLock - Python Package Manager",
+  "dependencies": [
+    "curl",
+    "zlib"
+  ],
+  "builtin-baseline": "2024.06.15"
+}
