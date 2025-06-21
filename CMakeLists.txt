@@ -11,17 +11,60 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 
-# Find local ZLIB library
-find_library(ZLIB_LIBRARY 
-    NAMES zd
-    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib
-    NO_DEFAULT_PATH
-)
+# Try to find packages using vcpkg first, then fall back to local libraries
+find_package(CURL QUIET)
+find_package(ZLIB QUIET)
 
-if(ZLIB_LIBRARY)
-    message(STATUS "Found local ZLIB: ${ZLIB_LIBRARY}")
+# Check if we're using vcpkg
+if(DEFINED ENV{VCPKG_ROOT} OR DEFINED CMAKE_TOOLCHAIN_FILE)
+    message(STATUS "Using vcpkg for dependencies")
+    
+    # If vcpkg packages not found, show warning but continue
+    if(NOT CURL_FOUND)
+        message(WARNING "CURL not found via vcpkg, using local headers")
+        set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
+        set(CURL_LIBRARIES "") # We'll add Windows libs later
+        set(CURL_FOUND TRUE)
+    endif()
+    
+    if(NOT ZLIB_FOUND)
+        message(WARNING "ZLIB not found via vcpkg, using local library")
+        find_library(ZLIB_LIBRARY 
+            NAMES zd
+            PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib
+            NO_DEFAULT_PATH
+        )
+        
+        if(ZLIB_LIBRARY)
+            message(STATUS "Found local ZLIB: ${ZLIB_LIBRARY}")
+            set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+            set(ZLIB_INCLUDE_DIRS ${THIRD_PARTY_DIR}/zlib)
+            set(ZLIB_FOUND TRUE)
+        else()
+            message(WARNING "ZLIB library not found")
+        endif()
+    endif()
 else()
-    message(WARNING "ZLIB library not found")
+    message(STATUS "Not using vcpkg, using local libraries")
+    # Use local libraries
+    set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
+    set(CURL_LIBRARIES "") # We'll add Windows libs later
+    set(CURL_FOUND TRUE)
+    
+    find_library(ZLIB_LIBRARY 
+        NAMES zd
+        PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        NO_DEFAULT_PATH
+    )
+    
+    if(ZLIB_LIBRARY)
+        message(STATUS "Found local ZLIB: ${ZLIB_LIBRARY}")
+        set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+        set(ZLIB_INCLUDE_DIRS ${THIRD_PARTY_DIR}/zlib)
+        set(ZLIB_FOUND TRUE)
+    else()
+        message(WARNING "ZLIB library not found")
+    endif()
 endif()
 
 # Fetch external dependencies
@@ -46,7 +89,7 @@ if(WIN32)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-D_WIN32_WINNT=0x0601)
-    add_definitions(-DCURL_STATICLIB)
+    add_definitions(-DNOMINMAX)
 endif()
 
 # Define source files
@@ -61,22 +104,31 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # Add include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${INCLUDE_DIR}
-    ${THIRD_PARTY_DIR}/curl
-    ${THIRD_PARTY_DIR}/zlib
+    ${CURL_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)
-# target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
-# Handle ZLIB linking
-if(ZLIB_LIBRARY)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${ZLIB_LIBRARY})
+# Link CURL
+if(TARGET CURL::libcurl)
+    target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
+elseif(CURL_LIBRARIES)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
+endif()
+
+# Link ZLIB
+if(TARGET ZLIB::ZLIB)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+elseif(ZLIB_LIBRARIES)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${ZLIB_LIBRARIES})
 endif()
 
 # Add Windows networking libraries for CURL functionality
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE wininet ws2_32 wldap32 crypt32 normaliz)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CURL_STATICLIB)
 endif()
 
 # Link filesystem library for C++17

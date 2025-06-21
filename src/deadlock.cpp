@@ -5,9 +5,15 @@
 #include <string>
 #include <vector>
 #include "../include/json.hpp"
+#if defined(CURL_STATICLIB) || defined(_WIN32)
+#include <curl/curl.h>
+#else
 #include "../third_party/curl/curl.h"
-#include "../third_party/zlib/zlib.h"
+#endif
+#include <zlib.h>
 #include <sstream>
+#include <stdexcept>
+#include <algorithm>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -302,18 +308,20 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);        
     CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
-    if (res != CURLE_OK) {
+    curl_easy_cleanup(curl);    if (res != CURLE_OK) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
-    }    try {
+        return false;
+    }
+    
+    try {
         json j = json::parse(response);
         if (!j.contains("urls")) {
-            throw exception("Cannot find valid url to download package");
+            throw std::runtime_error("Cannot find valid url to download package");
         }
         
         // Check if urls array is not empty
         if (j["urls"].empty()) {
-            throw exception("No download URLs available for this package");
+            throw std::runtime_error("No download URLs available for this package");
         }
 #ifdef _WIN32
         // Find Windows compatible wheel
@@ -329,9 +337,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No Windows compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No Windows compatible wheel found for this package");
         }
 
 #elif __APPLE__
@@ -347,9 +354,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No macOS compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No macOS compatible wheel found for this package");
         }
         
 #else
@@ -365,9 +371,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No Linux compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No Linux compatible wheel found for this package");
         }
 #endif
 
@@ -444,7 +449,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     } catch (json::exception& e) {
         cerr << "Error parsing JSON" << e.what() << endl;
         return false;
-    } catch(exception& e) {
+    } catch(std::exception& e) {
         cerr << "Error finding valid package" << e.what() << endl;
         return false;
     }
@@ -522,21 +527,20 @@ string DeadLock::getLatestVersion(const string& packageName) {
     // Parse JSON to extract version information
     try {
         json j = json::parse(info);
-        if(j.contains("info")) {
-            if (j["info"].contains("version"))
+        if(j.contains("info")) {            if (j["info"].contains("version"))
             {
                 return j["info"]["version"];
             } else {
-                throw exception("error retrieving version. Retry or report an issue on GitHub.");
+                throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
             }
         } else if (j.contains("version")) {
             return j["version"];
         } else {
-            throw exception("error retrieving version. Retry or report an issue on GitHub.");
+            throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
         }
     } catch(json::exception& e) {
         cerr << "error parsing json: " << e.what() << endl;
-    } catch (exception& e) {
+    } catch (std::exception& e) {
         cerr << e.what() << endl;
     }    return ""; // Default return for error cases
 }
@@ -882,7 +886,7 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
             return false;
         }
         // Extract and decompress file data
-        vector<unsigned char> decompressedData(max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
+        vector<unsigned char> decompressedData(std::max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
         
         if (compressionMethod == 0) {
             // No compression (stored)
@@ -1175,8 +1179,7 @@ vector<string> DeadLock::getPackageDependencies(const string& packageName, const
                         size_t gtPos = depString.find('>');
                         size_t ltPos = depString.find('<');
                         size_t eqPos = depString.find('=');
-                        
-                        size_t endPos = min({
+                          size_t endPos = std::min({
                             spacePos != string::npos ? spacePos : depString.length(),
                             parenPos != string::npos ? parenPos : depString.length(),
                             semicolonPos != string::npos ? semicolonPos : depString.length(),

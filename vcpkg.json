@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "DeadLock - Python Package Manager",
   "dependencies": [
-    "curl",
+    {
+      "name": "curl",
+      "features": ["ssl"]
+    },
     "zlib"
   ],
-  "builtin-baseline": "2024.06.15"
+  "builtin-baseline": "0cf34c184ce990471435b5b9c92edcf7424930b1"
 }
