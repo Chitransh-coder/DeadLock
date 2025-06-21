@@ -23,7 +23,7 @@ if(DEFINED ENV{VCPKG_ROOT} OR DEFINED CMAKE_TOOLCHAIN_FILE)
     if(NOT CURL_FOUND)
         message(WARNING "CURL not found via vcpkg, using local headers")
         set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
-        set(CURL_LIBRARIES "") # We'll add Windows libs later
+        set(CURL_LIBRARIES "")
         set(CURL_FOUND TRUE)
     endif()
     
@@ -48,7 +48,7 @@ else()
     message(STATUS "Not using vcpkg, using local libraries")
     # Use local libraries
     set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
-    set(CURL_LIBRARIES "") # We'll add Windows libs later
+    set(CURL_LIBRARIES "")
     set(CURL_FOUND TRUE)
     
     find_library(ZLIB_LIBRARY 
@@ -76,7 +76,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(CLI11)
 
-# Use local json.hpp instead of fetching
+# Use local json.hpp instead of fetching, use this if CMake can't find original json.hpp
 # FetchContent_Declare(
 #     nlohmann_json
 #     GIT_REPOSITORY https://github.com/nlohmann/json
