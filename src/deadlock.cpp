@@ -5,9 +5,15 @@
 #include <string>
 #include <vector>
 #include "../include/json.hpp"
-#include "../curl/curl.h"
+#if defined(CURL_STATICLIB) || defined(_WIN32)
+#include <curl/curl.h>
+#else
+#include "../third_party/curl/curl.h"
+#endif
 #include <zlib.h>
 #include <sstream>
+#include <stdexcept>
+#include <algorithm>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -302,18 +308,20 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);        
     CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
-    if (res != CURLE_OK) {
+    curl_easy_cleanup(curl);    if (res != CURLE_OK) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
-    }    try {
+        return false;
+    }
+    
+    try {
         json j = json::parse(response);
         if (!j.contains("urls")) {
-            throw exception("Cannot find valid url to download package");
+            throw std::runtime_error("Cannot find valid url to download package");
         }
         
         // Check if urls array is not empty
         if (j["urls"].empty()) {
-            throw exception("No download URLs available for this package");
+            throw std::runtime_error("No download URLs available for this package");
         }
 #ifdef _WIN32
         // Find Windows compatible wheel
@@ -329,9 +337,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No Windows compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No Windows compatible wheel found for this package");
         }
 
 #elif __APPLE__
@@ -347,9 +354,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No macOS compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No macOS compatible wheel found for this package");
         }
         
 #else
@@ -365,9 +371,8 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                     break;
                 }
             }
-        }
-        if (!foundCompatibleWheel) {
-            throw exception("No Linux compatible wheel found for this package");
+        }        if (!foundCompatibleWheel) {
+            throw std::runtime_error("No Linux compatible wheel found for this package");
         }
 #endif
 
@@ -436,13 +441,15 @@ bool DeadLock::installPackage(const string& package,const string& version) {
             cerr << "Package installation verification failed" << endl;
             return false;
         }
+          cout << "Package " << package << " successfully installed and verified!" << endl;
         
-        cout << "Package " << package << " successfully installed and verified!" << endl;
+        // Update dead.lock file with installed package
+        updateDeadLockFile(package, version);
 
     } catch (json::exception& e) {
         cerr << "Error parsing JSON" << e.what() << endl;
         return false;
-    } catch(exception& e) {
+    } catch(std::exception& e) {
         cerr << "Error finding valid package" << e.what() << endl;
         return false;
     }
@@ -520,21 +527,20 @@ string DeadLock::getLatestVersion(const string& packageName) {
     // Parse JSON to extract version information
     try {
         json j = json::parse(info);
-        if(j.contains("info")) {
-            if (j["info"].contains("version"))
+        if(j.contains("info")) {            if (j["info"].contains("version"))
             {
                 return j["info"]["version"];
             } else {
-                throw exception("error retrieving version. Retry or report an issue on GitHub.");
+                throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
             }
         } else if (j.contains("version")) {
             return j["version"];
         } else {
-            throw exception("error retrieving version. Retry or report an issue on GitHub.");
+            throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
         }
     } catch(json::exception& e) {
         cerr << "error parsing json: " << e.what() << endl;
-    } catch (exception& e) {
+    } catch (std::exception& e) {
         cerr << e.what() << endl;
     }    return ""; // Default return for error cases
 }
@@ -879,8 +885,8 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
             cerr << "Failed to create directory for: " << fullPath << endl;
             return false;
         }
-          // Extract and decompress file data
-        vector<unsigned char> decompressedData(max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
+        // Extract and decompress file data
+        vector<unsigned char> decompressedData(std::max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
         
         if (compressionMethod == 0) {
             // No compression (stored)
@@ -945,5 +951,390 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
     }
     
     cout << "All entries processed successfully" << endl;
+    return true;
+}
+
+// Dead.lock file management functions
+bool DeadLock::generateDeadLockFile(const string& projectPath) {
+    string lockFilePath = getDeadLockFilePath(projectPath);
+    
+    // Create the dead.lock file with initial structure
+    json lockData = {
+        {"version", "1.0"},
+        {"generated", getCurrentTimestamp()},
+        {"packages", json::object()},
+        {"metadata", {
+            {"python_version", ""},
+            {"platform", 
+#ifdef _WIN32
+                "windows"
+#elif __APPLE__
+                "macos"
+#else
+                "linux"
+#endif
+            },
+            {"deadlock_version", "1.0.0"}
+        }}
+    };
+    
+    string content = lockData.dump(4);
+    bool success = writeDeadLockFile(content, lockFilePath);
+    
+    if (success) {
+        cout << "Generated dead.lock file at: " << lockFilePath << endl;
+    }
+    
+    return success;
+}
+
+bool DeadLock::loadDeadLockFile(const string& projectPath) {
+    string lockFilePath = getDeadLockFilePath(projectPath);
+    string content = readDeadLockFile(lockFilePath);
+    
+    if (content.empty()) {
+        cout << "No dead.lock file found. Creating new one..." << endl;
+        return generateDeadLockFile(projectPath);
+    }
+    
+    return parseDeadLockJson(content);
+}
+
+bool DeadLock::updateDeadLockFile(const string& packageName, const string& version, 
+                                  const string& source, bool isDev) {
+    // Get package dependencies
+    vector<string> deps = getPackageDependencies(packageName, version);
+    
+    // Create package dependency entry
+    PackageDependency package;
+    package.name = packageName;
+    package.version = version;
+    package.source = source;
+    package.installDate = getCurrentTimestamp();
+    package.dependencies = deps;
+    package.hash = calculatePackageHash(packageName, version);
+    package.isDev = isDev;
+    
+    // Add to installed packages map
+    installedPackages[packageName] = package;
+    
+    // Generate and write updated dead.lock file
+    string lockFilePath = getDeadLockFilePath(".");
+    string content = generateDeadLockJson();
+    
+    bool success = writeDeadLockFile(content, lockFilePath);
+    
+    if (success) {
+        cout << "Updated dead.lock file with package: " << packageName << "@" << version << endl;
+    }
+    
+    return success;
+}
+
+bool DeadLock::removeFromDeadLockFile(const string& packageName) {
+    auto it = installedPackages.find(packageName);
+    if (it == installedPackages.end()) {
+        cerr << "Package " << packageName << " not found in dead.lock file" << endl;
+        return false;
+    }
+    
+    installedPackages.erase(it);
+    
+    // Write updated dead.lock file
+    string lockFilePath = getDeadLockFilePath(".");
+    string content = generateDeadLockJson();
+    
+    bool success = writeDeadLockFile(content, lockFilePath);
+    
+    if (success) {
+        cout << "Removed package " << packageName << " from dead.lock file" << endl;
+    }
+    
+    return success;
+}
+
+bool DeadLock::validateDeadLockFile(const string& projectPath) {
+    string lockFilePath = getDeadLockFilePath(projectPath);
+    string content = readDeadLockFile(lockFilePath);
+    
+    if (content.empty()) {
+        cerr << "No dead.lock file found at: " << lockFilePath << endl;
+        return false;
+    }
+    
+    try {
+        json lockData = json::parse(content);
+        
+        // Validate structure
+        if (!lockData.contains("version") || !lockData.contains("packages")) {
+            cerr << "Invalid dead.lock file structure" << endl;
+            return false;
+        }
+        
+        // Validate each package entry
+        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+            PackageDependency pkg;
+            pkg.name = packageName;
+            pkg.version = packageInfo.value("version", "");
+            pkg.source = packageInfo.value("source", "");
+            pkg.hash = packageInfo.value("hash", "");
+            
+            if (!validatePackageEntry(pkg)) {
+                cerr << "Invalid package entry: " << packageName << endl;
+                return false;
+            }
+        }
+        
+        cout << "dead.lock file is valid" << endl;
+        return true;
+        
+    } catch (json::exception& e) {
+        cerr << "Error parsing dead.lock file: " << e.what() << endl;
+        return false;
+    }
+}
+
+vector<PackageDependency> DeadLock::getInstalledPackages() const {
+    vector<PackageDependency> packages;
+    for (const auto& [name, pkg] : installedPackages) {
+        packages.push_back(pkg);
+    }
+    return packages;
+}
+
+PackageDependency DeadLock::getPackageDependency(const string& packageName) const {
+    auto it = installedPackages.find(packageName);
+    if (it != installedPackages.end()) {
+        return it->second;
+    }
+    return PackageDependency{}; // Return empty dependency if not found
+}
+
+bool DeadLock::isPackageInstalled(const string& packageName) const {
+    return installedPackages.find(packageName) != installedPackages.end();
+}
+
+bool DeadLock::syncFromDeadLock(const string& projectPath) {
+    if (!loadDeadLockFile(projectPath)) {
+        cerr << "Failed to load dead.lock file" << endl;
+        return false;
+    }
+    
+    cout << "Syncing packages from dead.lock file..." << endl;
+    
+    bool allSuccess = true;
+    for (const auto& [packageName, package] : installedPackages) {
+        cout << "Installing " << packageName << "@" << package.version << "..." << endl;
+        
+        if (!installPackage(packageName, package.version)) {
+            cerr << "Failed to install package: " << packageName << endl;
+            allSuccess = false;
+        }
+    }
+    
+    if (allSuccess) {
+        cout << "Successfully synced all packages from dead.lock file" << endl;
+    }
+    
+    return allSuccess;
+}
+
+string DeadLock::getDeadLockFilePath(const string& projectPath) const {
+    return projectPath + "/dead.lock";
+}
+
+string DeadLock::getCurrentTimestamp() const {
+    time_t now = time(0);
+    char* timeStr = ctime(&now);
+    string timestamp(timeStr);
+    // Remove newline character
+    if (!timestamp.empty() && timestamp.back() == '\n') {
+        timestamp.pop_back();
+    }
+    return timestamp;
+}
+
+string DeadLock::calculatePackageHash(const string& packageName, const string& version) const {
+    string combined = packageName + version;
+    size_t hash = std::hash<string>{}(combined);
+    return to_string(hash);
+}
+
+vector<string> DeadLock::getPackageDependencies(const string& packageName, const string& version) const {
+    // Get package info and extract dependencies
+    string info = const_cast<DeadLock*>(this)->getPackageInfo(packageName);
+    vector<string> dependencies;
+    
+    if (!info.empty()) {
+        try {
+            json packageData = json::parse(info);
+            if (packageData.contains("info") && packageData["info"].contains("requires_dist")) {
+                for (const auto& req : packageData["info"]["requires_dist"]) {
+                    if (!req.is_null()) {
+                        string depString = req.get<string>();
+                        // Extract package name (before any version specifiers)
+                        size_t spacePos = depString.find(' ');
+                        size_t parenPos = depString.find('(');
+                        size_t semicolonPos = depString.find(';');
+                        size_t gtPos = depString.find('>');
+                        size_t ltPos = depString.find('<');
+                        size_t eqPos = depString.find('=');
+                          size_t endPos = std::min({
+                            spacePos != string::npos ? spacePos : depString.length(),
+                            parenPos != string::npos ? parenPos : depString.length(),
+                            semicolonPos != string::npos ? semicolonPos : depString.length(),
+                            gtPos != string::npos ? gtPos : depString.length(),
+                            ltPos != string::npos ? ltPos : depString.length(),
+                            eqPos != string::npos ? eqPos : depString.length()
+                        });
+                        
+                        string depName = depString.substr(0, endPos);
+                        if (!depName.empty()) {
+                            dependencies.push_back(depName);
+                        }
+                    }
+                }
+            }
+        } catch (json::exception& e) {
+            cerr << "Error parsing dependencies for " << packageName << ": " << e.what() << endl;
+        }
+    }
+    
+    return dependencies;
+}
+
+// Private helper functions
+bool DeadLock::parseDeadLockJson(const string& jsonContent) {
+    try {
+        json lockData = json::parse(jsonContent);
+        
+        if (!lockData.contains("packages")) {
+            cerr << "Invalid dead.lock format: missing packages section" << endl;
+            return false;
+        }
+        
+        installedPackages.clear();
+        
+        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+            PackageDependency pkg;
+            pkg.name = packageName;
+            pkg.version = packageInfo.value("version", "");
+            pkg.source = packageInfo.value("source", "pypi");
+            pkg.installDate = packageInfo.value("install_date", "");
+            pkg.hash = packageInfo.value("hash", "");
+            pkg.isDev = packageInfo.value("is_dev", false);
+            
+            if (packageInfo.contains("dependencies") && packageInfo["dependencies"].is_array()) {
+                for (const auto& dep : packageInfo["dependencies"]) {
+                    pkg.dependencies.push_back(dep.get<string>());
+                }
+            }
+            
+            installedPackages[packageName] = pkg;
+        }
+        
+        cout << "Loaded " << installedPackages.size() << " packages from dead.lock file" << endl;
+        return true;
+        
+    } catch (json::exception& e) {
+        cerr << "Error parsing dead.lock file: " << e.what() << endl;
+        return false;
+    }
+}
+
+string DeadLock::generateDeadLockJson() const {
+    json lockData = {
+        {"version", "1.0"},
+        {"generated", getCurrentTimestamp()},
+        {"packages", json::object()},
+        {"metadata", {
+            {"python_version", ""},
+            {"platform", 
+#ifdef _WIN32
+                "windows"
+#elif __APPLE__
+                "macos"
+#else
+                "linux"
+#endif
+            },
+            {"deadlock_version", "1.0.0"}
+        }}
+    };
+    
+    for (const auto& [packageName, package] : installedPackages) {
+        json packageJson = {
+            {"version", package.version},
+            {"source", package.source},
+            {"install_date", package.installDate},
+            {"hash", package.hash},
+            {"is_dev", package.isDev},
+            {"dependencies", package.dependencies}
+        };
+        
+        lockData["packages"][packageName] = packageJson;
+    }
+    
+    return lockData.dump(4);
+}
+
+bool DeadLock::writeDeadLockFile(const string& content, const string& filePath) const {
+    // Create backup before writing
+    backupDeadLockFile(filePath);
+    
+    ofstream file(filePath);
+    if (!file) {
+        cerr << "Failed to open dead.lock file for writing: " << filePath << endl;
+        return false;
+    }
+    
+    file << content;
+    file.close();
+    
+    if (!file.good()) {
+        cerr << "Failed to write to dead.lock file: " << filePath << endl;
+        return false;
+    }
+    
+    return true;
+}
+
+string DeadLock::readDeadLockFile(const string& filePath) const {
+    ifstream file(filePath);
+    if (!file) {
+        return ""; // File doesn't exist
+    }
+    
+    stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+bool DeadLock::backupDeadLockFile(const string& filePath) const {
+    ifstream source(filePath);
+    if (!source) {
+        return true; // No file to backup
+    }
+    
+    string backupPath = filePath + ".backup";
+    ofstream backup(backupPath);
+    if (!backup) {
+        cerr << "Failed to create backup file: " << backupPath << endl;
+        return false;
+    }
+    
+    backup << source.rdbuf();
+    source.close();
+    backup.close();
+    
+    return backup.good();
+}
+
+bool DeadLock::validatePackageEntry(const PackageDependency& package) const {
+    if (package.name.empty() || package.version.empty()) {
+        return false;
+    }
+    
+    // Add more validation rules as needed
     return true;
 }
