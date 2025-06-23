@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <ctime>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -151,10 +152,9 @@ void DeadLock::init(string projectName) {
                                                "4) Empty" << endl;
     cin >> type;
     switch(type) {
-        case 1:
-            packages = {"pandas", 
+        case 1:            packages = {"pandas", 
                         "numpy", 
-                        "scikit-learn"
+                        "scikit-learn",
                         "matplotlib",
                         "seaborn",
                         "scipy"
@@ -168,11 +168,10 @@ void DeadLock::init(string projectName) {
             cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
             cin >> option;
             switch (option) {
-            case 1:
-                packages = {
+            case 1:                packages = {
                     "pandas", 
                     "numpy", 
-                    "scikit-learn"
+                    "scikit-learn",
                     "matplotlib",
                     "seaborn",
                     "tensorflow",
@@ -181,11 +180,10 @@ void DeadLock::init(string projectName) {
                     "keras"
                 };
                 break;
-            case 2:
-                packages = {
+            case 2:                packages = {
                     "pandas", 
                     "numpy", 
-                    "scikit-learn"
+                    "scikit-learn",
                     "matplotlib",
                     "seaborn",
                     "torch",
@@ -210,11 +208,10 @@ void DeadLock::init(string projectName) {
             cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
             cin >> option;
             switch (option) {
-                case 1:
-                    packages = {
+                case 1:                    packages = {
                         "pandas", 
                         "numpy", 
-                        "scikit-learn"
+                        "scikit-learn",
                         "matplotlib",
                         "seaborn",
                         "tensorflow",
@@ -225,11 +222,10 @@ void DeadLock::init(string projectName) {
                         "keras"
                     };
                     break;
-                case 2:
-                    packages = {
+                case 2:                    packages = {
                         "pandas", 
                         "numpy", 
-                        "scikit-learn"
+                        "scikit-learn",
                         "matplotlib",
                         "seaborn",
                         "torch",
@@ -1127,11 +1123,11 @@ bool DeadLock::updateDeadLockFile(const string& packageName, const string& versi
     PackageDependency package;
     package.name = packageName;
     package.version = version;
-    package.source = source;
+    package.source = "pypi";  // Default source
     package.installDate = getCurrentTimestamp();
     package.dependencies = deps;
     package.hash = calculatePackageHash(packageName, version);
-    package.isDev = isDev;
+    package.isDev = false;  // Default to false
     
     // Add to installed packages map
     installedPackages[packageName] = package;
@@ -1188,9 +1184,9 @@ bool DeadLock::validateDeadLockFile(const string& projectPath) {
             cerr << "Invalid dead.lock file structure" << endl;
             return false;
         }
-        
-        // Validate each package entry
-        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+          // Validate each package entry
+        for (const auto& item : lockData["packages"].items()) {
+            const string& packageName = item.key();
             PackageDependency pkg;
             pkg.name = packageName;
             pkg.version = packageInfo.value("version", "");
@@ -1214,8 +1210,8 @@ bool DeadLock::validateDeadLockFile(const string& projectPath) {
 
 vector<PackageDependency> DeadLock::getInstalledPackages() const {
     vector<PackageDependency> packages;
-    for (const auto& [name, pkg] : installedPackages) {
-        packages.push_back(pkg);
+    for (const auto& item : installedPackages) {
+        packages.push_back(item.second);
     }
     return packages;
 }
@@ -1237,11 +1233,12 @@ bool DeadLock::syncFromDeadLock(const string& projectPath) {
         cerr << "Failed to load dead.lock file" << endl;
         return false;
     }
-    
-    cout << "Syncing packages from dead.lock file..." << endl;
+      cout << "Syncing packages from dead.lock file..." << endl;
     
     bool allSuccess = true;
-    for (const auto& [packageName, package] : installedPackages) {
+    for (const auto& item : installedPackages) {
+        const string& packageName = item.first;
+        const PackageDependency& package = item.second;
         cout << "Installing " << packageName << "@" << package.version << "..." << endl;
         
         if (!installPackage(packageName, package.version)) {
@@ -1330,10 +1327,11 @@ bool DeadLock::parseDeadLockJson(const string& jsonContent) {
             cerr << "Invalid dead.lock format: missing packages section" << endl;
             return false;
         }
+          installedPackages.clear();
         
-        installedPackages.clear();
-        
-        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+        for (const auto& item : lockData["packages"].items()) {
+            const string& packageName = item.key();
+            const auto& packageInfo = item.value();
             PackageDependency pkg;
             pkg.name = packageName;
             pkg.version = packageInfo.value("version", "");
@@ -1379,8 +1377,9 @@ string DeadLock::generateDeadLockJson() const {
             {"deadlock_version", "1.0.0"}
         }}
     };
-    
-    for (const auto& [packageName, package] : installedPackages) {
+      for (const auto& item : installedPackages) {
+        const string& packageName = item.first;
+        const PackageDependency& package = item.second;
         json packageJson = {
             {"version", package.version},
             {"source", package.source},
