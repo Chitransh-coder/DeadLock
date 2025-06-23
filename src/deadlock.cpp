@@ -130,6 +130,8 @@ bool createDirectoryRecursive(const string& path) {
 }
 
 void DeadLock::init(string projectName) {
+    int type = 0, option = 0;
+    vector<string> packages(10);
     if (!isPythonAvailable())
     {
         cerr << "Python not available! Please download latest version from https://www.python.org/" << endl;
@@ -138,9 +140,126 @@ void DeadLock::init(string projectName) {
 // Check User OS
 #ifdef _WIN32
     _mkdir(projectName.c_str());
+    createVirtualEnvironment(projectName + "\\");
 #else
     mkdir(projectName.c_str(), 0755);
+    createVirtualEnvironment(projectName + "/");
 #endif
+    cout << "What type of project do you want?\n1) Basic\n"
+                                               "2) Computer Vision\n"
+                                               "3) NLP\n"
+                                               "4) Empty" << endl;
+    cin >> type;
+    switch(type) {
+        case 1:
+            packages = {"pandas", 
+                        "numpy", 
+                        "scikit-learn"
+                        "matplotlib",
+                        "seaborn",
+                        "scipy"
+                    };
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 2:
+            cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
+            cin >> option;
+            switch (option) {
+            case 1:
+                packages = {
+                    "pandas", 
+                    "numpy", 
+                    "scikit-learn"
+                    "matplotlib",
+                    "seaborn",
+                    "tensorflow",
+                    "opencv-contrib-python",
+                    "openai",
+                    "keras"
+                };
+                break;
+            case 2:
+                packages = {
+                    "pandas", 
+                    "numpy", 
+                    "scikit-learn"
+                    "matplotlib",
+                    "seaborn",
+                    "torch",
+                    "torchvision",
+                    "opencv-contrib-python",
+                    "openai"
+                };
+                break;
+
+            default:
+                cout << "Invalid option chosen, ending operations" << endl;
+                _rmdir(projectName.c_str());
+                exit(-1);    
+                break;
+            }
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 3:
+            cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
+            cin >> option;
+            switch (option) {
+                case 1:
+                    packages = {
+                        "pandas", 
+                        "numpy", 
+                        "scikit-learn"
+                        "matplotlib",
+                        "seaborn",
+                        "tensorflow",
+                        "nltk",
+                        "tokenizer",
+                        "embeddings",
+                        "openai",
+                        "keras"
+                    };
+                    break;
+                case 2:
+                    packages = {
+                        "pandas", 
+                        "numpy", 
+                        "scikit-learn"
+                        "matplotlib",
+                        "seaborn",
+                        "torch",
+                        "nltk",
+                        "tokenizer",
+                        "embeddings",
+                        "openai"
+                    };
+                    break;
+
+                default:
+                    cout << "Invalid option chosen, ending operations" << endl;
+                    _rmdir(projectName.c_str());
+                    exit(-1);    
+                    break;
+                }
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 4:
+            break;
+        default:
+            cout << "Invalid option chosen, ending operations" << endl;
+            _rmdir(projectName.c_str());
+            exit(-1);
+            break;
+    }
+
     // Generate all project files
     notebookGenerate(projectName);
     pyFileGenerate(projectName);
@@ -1000,8 +1119,7 @@ bool DeadLock::loadDeadLockFile(const string& projectPath) {
     return parseDeadLockJson(content);
 }
 
-bool DeadLock::updateDeadLockFile(const string& packageName, const string& version, 
-                                  const string& source, bool isDev) {
+bool DeadLock::updateDeadLockFile(const string& packageName, const string& version) {
     // Get package dependencies
     vector<string> deps = getPackageDependencies(packageName, version);
     
