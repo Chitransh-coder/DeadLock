@@ -30,7 +30,7 @@ using json = nlohmann::json;
 size_t WriteToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
 
 // Callback function for writing data from curl
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* userp) {
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
@@ -427,16 +427,51 @@ bool DeadLock::installPackage(const string& package,const string& version) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
         return false;
     }
-    
     try {
         json j = json::parse(response);
+        if (!j.contains("info")){
+            throw runtime_error("Cannot retrieve info of the package.");
+        }
+        if (!j["info"].contains("requires_dist")) {
+            throw runtime_error("Cannot retrieve required packages.");
+        }
+        // Extract and install dependencies
+        vector<string> dependencies;
+        for (const auto& requirement : j["info"]["requires_dist"]) {
+            if (!requirement.is_null()) {
+            string reqString = requirement.get<string>();
+            
+            // Extract package name
+            size_t endPos = reqString.find_first_of(">=<;");
+            if (endPos != string::npos) {
+                string packageName = reqString.substr(0, endPos);
+                // Trim whitespace
+                packageName.erase(0, packageName.find_first_not_of(" \t"));
+                packageName.erase(packageName.find_last_not_of(" \t") + 1);
+                
+                if (!packageName.empty()) {
+                dependencies.push_back(packageName);
+                }
+            }
+            }
+        }
+        
+        // Install each dependency
+        cout << "Installing " << dependencies.size() << " dependencies for " << package << endl;
+        for (const string& dep : dependencies) {
+            cout << "Installing dependency: " << dep << endl;
+            string depVersion = getLatestVersion(dep);
+            if (!depVersion.empty() && !installPackage(dep, depVersion)) {
+            cerr << "Warning: Failed to install dependency " << dep << endl;
+            }
+        }
         if (!j.contains("urls")) {
-            throw std::runtime_error("Cannot find valid url to download package");
+            throw runtime_error("Cannot find valid url to download package");
         }
         
         // Check if urls array is not empty
         if (j["urls"].empty()) {
-            throw std::runtime_error("No download URLs available for this package");
+            throw runtime_error("No download URLs available for this package");
         }
 #ifdef _WIN32
         // Find Windows compatible wheel
@@ -453,7 +488,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No Windows compatible wheel found for this package");
+            throw runtime_error("No Windows compatible wheel found for this package");
         }
 
 #elif __APPLE__
@@ -470,7 +505,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No macOS compatible wheel found for this package");
+            throw runtime_error("No macOS compatible wheel found for this package");
         }
         
 #else
@@ -487,7 +522,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No Linux compatible wheel found for this package");
+            throw runtime_error("No Linux compatible wheel found for this package");
         }
 #endif
 
@@ -564,7 +599,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     } catch (json::exception& e) {
         cerr << "Error parsing JSON" << e.what() << endl;
         return false;
-    } catch(std::exception& e) {
+    } catch(exception& e) {
         cerr << "Error finding valid package" << e.what() << endl;
         return false;
     }
@@ -646,16 +681,16 @@ string DeadLock::getLatestVersion(const string& packageName) {
             {
                 return j["info"]["version"];
             } else {
-                throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
+                throw runtime_error("error retrieving version. Retry or report an issue on GitHub.");
             }
         } else if (j.contains("version")) {
             return j["version"];
         } else {
-            throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
+            throw runtime_error("error retrieving version. Retry or report an issue on GitHub.");
         }
     } catch(json::exception& e) {
         cerr << "error parsing json: " << e.what() << endl;
-    } catch (std::exception& e) {
+    } catch (exception& e) {
         cerr << e.what() << endl;
     }    return ""; // Default return for error cases
 }
@@ -1001,7 +1036,7 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
             return false;
         }
         // Extract and decompress file data
-        vector<unsigned char> decompressedData(std::max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
+        vector<unsigned char> decompressedData(max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
         
         if (compressionMethod == 0) {
             // No compression (stored)
@@ -1271,7 +1306,7 @@ string DeadLock::getCurrentTimestamp() const {
 
 string DeadLock::calculatePackageHash(const string& packageName, const string& version) const {
     string combined = packageName + version;
-    size_t hash = std::hash<string>{}(combined);
+    size_t hash = hash<string>{}(combined);
     return to_string(hash);
 }
 
@@ -1294,7 +1329,7 @@ vector<string> DeadLock::getPackageDependencies(const string& packageName, const
                         size_t gtPos = depString.find('>');
                         size_t ltPos = depString.find('<');
                         size_t eqPos = depString.find('=');
-                          size_t endPos = std::min({
+                          size_t endPos = min({
                             spacePos != string::npos ? spacePos : depString.length(),
                             parenPos != string::npos ? parenPos : depString.length(),
                             semicolonPos != string::npos ? semicolonPos : depString.length(),
