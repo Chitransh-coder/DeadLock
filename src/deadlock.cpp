@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <ctime>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -29,7 +30,7 @@ using json = nlohmann::json;
 size_t WriteToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
 
 // Callback function for writing data from curl
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* userp) {
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
@@ -130,6 +131,8 @@ bool createDirectoryRecursive(const string& path) {
 }
 
 void DeadLock::init(string projectName) {
+    int type = 0, option = 0;
+    vector<string> packages(10);
     if (!isPythonAvailable())
     {
         cerr << "Python not available! Please download latest version from https://www.python.org/" << endl;
@@ -138,9 +141,121 @@ void DeadLock::init(string projectName) {
 // Check User OS
 #ifdef _WIN32
     _mkdir(projectName.c_str());
+    createVirtualEnvironment(projectName + "\\");
 #else
     mkdir(projectName.c_str(), 0755);
+    createVirtualEnvironment(projectName + "/");
 #endif
+    cout << "What type of project do you want?\n1) Basic\n"
+                                               "2) Computer Vision\n"
+                                               "3) NLP\n"
+                                               "4) Empty" << endl;
+    cin >> type;
+    switch(type) {
+        case 1:            packages = {"pandas", 
+                        "numpy", 
+                        "scikit-learn",
+                        "matplotlib",
+                        "seaborn",
+                        "scipy"
+                    };
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 2:
+            cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
+            cin >> option;
+            switch (option) {
+            case 1:                packages = {
+                    "pandas", 
+                    "numpy", 
+                    "scikit-learn",
+                    "matplotlib",
+                    "seaborn",
+                    "tensorflow",
+                    "opencv-contrib-python",
+                    "openai",
+                    "keras"
+                };
+                break;
+            case 2:                packages = {
+                    "pandas", 
+                    "numpy", 
+                    "scikit-learn",
+                    "matplotlib",
+                    "seaborn",
+                    "torch",
+                    "torchvision",
+                    "opencv-contrib-python",
+                    "openai"
+                };
+                break;
+
+            default:
+                cout << "Invalid option chosen, ending operations" << endl;
+                _rmdir(projectName.c_str());
+                exit(-1);    
+                break;
+            }
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 3:
+            cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n" << endl;
+            cin >> option;
+            switch (option) {
+                case 1:                    packages = {
+                        "pandas", 
+                        "numpy", 
+                        "scikit-learn",
+                        "matplotlib",
+                        "seaborn",
+                        "tensorflow",
+                        "nltk",
+                        "tokenizer",
+                        "embeddings",
+                        "openai",
+                        "keras"
+                    };
+                    break;
+                case 2:                    packages = {
+                        "pandas", 
+                        "numpy", 
+                        "scikit-learn",
+                        "matplotlib",
+                        "seaborn",
+                        "torch",
+                        "nltk",
+                        "tokenizer",
+                        "embeddings",
+                        "openai"
+                    };
+                    break;
+
+                default:
+                    cout << "Invalid option chosen, ending operations" << endl;
+                    _rmdir(projectName.c_str());
+                    exit(-1);    
+                    break;
+                }
+            if(!installPackages(packages)) {
+                cout << "Error installing Packages" << endl;
+                exit(-1);
+            }
+            break;
+        case 4:
+            break;
+        default:
+            cout << "Invalid option chosen, ending operations" << endl;
+            _rmdir(projectName.c_str());
+            exit(-1);
+            break;
+    }
+
     // Generate all project files
     notebookGenerate(projectName);
     pyFileGenerate(projectName);
@@ -312,16 +427,51 @@ bool DeadLock::installPackage(const string& package,const string& version) {
         cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
         return false;
     }
-    
     try {
         json j = json::parse(response);
+        if (!j.contains("info")){
+            throw runtime_error("Cannot retrieve info of the package.");
+        }
+        if (!j["info"].contains("requires_dist")) {
+            throw runtime_error("Cannot retrieve required packages.");
+        }
+        // Extract and install dependencies
+        vector<string> dependencies;
+        for (const auto& requirement : j["info"]["requires_dist"]) {
+            if (!requirement.is_null()) {
+            string reqString = requirement.get<string>();
+            
+            // Extract package name
+            size_t endPos = reqString.find_first_of(">=<;");
+            if (endPos != string::npos) {
+                string packageName = reqString.substr(0, endPos);
+                // Trim whitespace
+                packageName.erase(0, packageName.find_first_not_of(" \t"));
+                packageName.erase(packageName.find_last_not_of(" \t") + 1);
+                
+                if (!packageName.empty()) {
+                dependencies.push_back(packageName);
+                }
+            }
+            }
+        }
+        
+        // Install each dependency
+        cout << "Installing " << dependencies.size() << " dependencies for " << package << endl;
+        for (const string& dep : dependencies) {
+            cout << "Installing dependency: " << dep << endl;
+            string depVersion = getLatestVersion(dep);
+            if (!depVersion.empty() && !installPackage(dep, depVersion)) {
+            cerr << "Warning: Failed to install dependency " << dep << endl;
+            }
+        }
         if (!j.contains("urls")) {
-            throw std::runtime_error("Cannot find valid url to download package");
+            throw runtime_error("Cannot find valid url to download package");
         }
         
         // Check if urls array is not empty
         if (j["urls"].empty()) {
-            throw std::runtime_error("No download URLs available for this package");
+            throw runtime_error("No download URLs available for this package");
         }
 #ifdef _WIN32
         // Find Windows compatible wheel
@@ -338,7 +488,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No Windows compatible wheel found for this package");
+            throw runtime_error("No Windows compatible wheel found for this package");
         }
 
 #elif __APPLE__
@@ -355,7 +505,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No macOS compatible wheel found for this package");
+            throw runtime_error("No macOS compatible wheel found for this package");
         }
         
 #else
@@ -372,7 +522,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
                 }
             }
         }        if (!foundCompatibleWheel) {
-            throw std::runtime_error("No Linux compatible wheel found for this package");
+            throw runtime_error("No Linux compatible wheel found for this package");
         }
 #endif
 
@@ -449,7 +599,7 @@ bool DeadLock::installPackage(const string& package,const string& version) {
     } catch (json::exception& e) {
         cerr << "Error parsing JSON" << e.what() << endl;
         return false;
-    } catch(std::exception& e) {
+    } catch(exception& e) {
         cerr << "Error finding valid package" << e.what() << endl;
         return false;
     }
@@ -531,16 +681,16 @@ string DeadLock::getLatestVersion(const string& packageName) {
             {
                 return j["info"]["version"];
             } else {
-                throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
+                throw runtime_error("error retrieving version. Retry or report an issue on GitHub.");
             }
         } else if (j.contains("version")) {
             return j["version"];
         } else {
-            throw std::runtime_error("error retrieving version. Retry or report an issue on GitHub.");
+            throw runtime_error("error retrieving version. Retry or report an issue on GitHub.");
         }
     } catch(json::exception& e) {
         cerr << "error parsing json: " << e.what() << endl;
-    } catch (std::exception& e) {
+    } catch (exception& e) {
         cerr << e.what() << endl;
     }    return ""; // Default return for error cases
 }
@@ -886,7 +1036,7 @@ bool DeadLock::parseAndExtractZip(const vector<unsigned char>& zipData, const st
             return false;
         }
         // Extract and decompress file data
-        vector<unsigned char> decompressedData(std::max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
+        vector<unsigned char> decompressedData(max(uncompressedSize, 1u)); // Ensure at least 1 byte for empty files
         
         if (compressionMethod == 0) {
             // No compression (stored)
@@ -1000,8 +1150,7 @@ bool DeadLock::loadDeadLockFile(const string& projectPath) {
     return parseDeadLockJson(content);
 }
 
-bool DeadLock::updateDeadLockFile(const string& packageName, const string& version, 
-                                  const string& source, bool isDev) {
+bool DeadLock::updateDeadLockFile(const string& packageName, const string& version) {
     // Get package dependencies
     vector<string> deps = getPackageDependencies(packageName, version);
     
@@ -1009,11 +1158,11 @@ bool DeadLock::updateDeadLockFile(const string& packageName, const string& versi
     PackageDependency package;
     package.name = packageName;
     package.version = version;
-    package.source = source;
+    package.source = "pypi";  // Default source
     package.installDate = getCurrentTimestamp();
     package.dependencies = deps;
     package.hash = calculatePackageHash(packageName, version);
-    package.isDev = isDev;
+    package.isDev = false;  // Default to false
     
     // Add to installed packages map
     installedPackages[packageName] = package;
@@ -1070,9 +1219,9 @@ bool DeadLock::validateDeadLockFile(const string& projectPath) {
             cerr << "Invalid dead.lock file structure" << endl;
             return false;
         }
-        
-        // Validate each package entry
-        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+          // Validate each package entry
+        for (const auto& item : lockData["packages"].items()) {
+            const string& packageName = item.key();
             PackageDependency pkg;
             pkg.name = packageName;
             pkg.version = packageInfo.value("version", "");
@@ -1096,8 +1245,8 @@ bool DeadLock::validateDeadLockFile(const string& projectPath) {
 
 vector<PackageDependency> DeadLock::getInstalledPackages() const {
     vector<PackageDependency> packages;
-    for (const auto& [name, pkg] : installedPackages) {
-        packages.push_back(pkg);
+    for (const auto& item : installedPackages) {
+        packages.push_back(item.second);
     }
     return packages;
 }
@@ -1119,11 +1268,12 @@ bool DeadLock::syncFromDeadLock(const string& projectPath) {
         cerr << "Failed to load dead.lock file" << endl;
         return false;
     }
-    
-    cout << "Syncing packages from dead.lock file..." << endl;
+      cout << "Syncing packages from dead.lock file..." << endl;
     
     bool allSuccess = true;
-    for (const auto& [packageName, package] : installedPackages) {
+    for (const auto& item : installedPackages) {
+        const string& packageName = item.first;
+        const PackageDependency& package = item.second;
         cout << "Installing " << packageName << "@" << package.version << "..." << endl;
         
         if (!installPackage(packageName, package.version)) {
@@ -1156,7 +1306,7 @@ string DeadLock::getCurrentTimestamp() const {
 
 string DeadLock::calculatePackageHash(const string& packageName, const string& version) const {
     string combined = packageName + version;
-    size_t hash = std::hash<string>{}(combined);
+    size_t hash = hash<string>{}(combined);
     return to_string(hash);
 }
 
@@ -1179,7 +1329,7 @@ vector<string> DeadLock::getPackageDependencies(const string& packageName, const
                         size_t gtPos = depString.find('>');
                         size_t ltPos = depString.find('<');
                         size_t eqPos = depString.find('=');
-                          size_t endPos = std::min({
+                          size_t endPos = min({
                             spacePos != string::npos ? spacePos : depString.length(),
                             parenPos != string::npos ? parenPos : depString.length(),
                             semicolonPos != string::npos ? semicolonPos : depString.length(),
@@ -1212,10 +1362,11 @@ bool DeadLock::parseDeadLockJson(const string& jsonContent) {
             cerr << "Invalid dead.lock format: missing packages section" << endl;
             return false;
         }
+          installedPackages.clear();
         
-        installedPackages.clear();
-        
-        for (const auto& [packageName, packageInfo] : lockData["packages"].items()) {
+        for (const auto& item : lockData["packages"].items()) {
+            const string& packageName = item.key();
+            const auto& packageInfo = item.value();
             PackageDependency pkg;
             pkg.name = packageName;
             pkg.version = packageInfo.value("version", "");
@@ -1261,8 +1412,9 @@ string DeadLock::generateDeadLockJson() const {
             {"deadlock_version", "1.0.0"}
         }}
     };
-    
-    for (const auto& [packageName, package] : installedPackages) {
+      for (const auto& item : installedPackages) {
+        const string& packageName = item.first;
+        const PackageDependency& package = item.second;
         json packageJson = {
             {"version", package.version},
             {"source", package.source},

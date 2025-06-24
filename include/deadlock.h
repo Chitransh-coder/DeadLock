@@ -43,8 +43,7 @@ public:
     // Dead.lock file management functions
     bool generateDeadLockFile(const string& projectPath = ".");
     bool loadDeadLockFile(const string& projectPath = ".");
-    bool updateDeadLockFile(const string& packageName, const string& version, 
-                           const string& source = "pypi", bool isDev = false);
+    bool updateDeadLockFile(const string& packageName, const string& version);
     bool removeFromDeadLockFile(const string& packageName);
     bool validateDeadLockFile(const string& projectPath = ".");
     
