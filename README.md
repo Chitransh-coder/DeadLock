@@ -278,7 +278,7 @@ Open an issue and follow below steps:
    git checkout -b feature/amazing-feature
    ```
 3. **Make your changes**
-4. **Add tests** for new functionality
+4. **Test your Changes**
 5. **Ensure code quality**
 6. **Commit your changes**
    ```bash
