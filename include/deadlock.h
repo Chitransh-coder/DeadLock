@@ -2,75 +2,77 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
+#include <queue>
+#include <functional>
+#include "structs.h"
 using namespace std;
-
-// Structure to represent a package dependency
-struct PackageDependency {
-    string name;
-    string version;
-    string source; // "pypi", "local", etc.
-    string installDate;
-    vector<string> dependencies; // Sub-dependencies
-    string hash; // Package hash for integrity
-    bool isDev; // Development dependency flag
-};
 
 class DeadLock {
 public:
+    // Global variable to store project name
+    static string gProjectName;
+    // Array containing all installed packages
+    vector<string> installedPackages;
     // Starter function
-    void init(string projectName);
+    void init( string projectName);
     // File generators definiton
     void notebookGenerate(string projectName);
     void pyFileGenerate(string projectName);
-    void tomlGenerate(string projectName);
     void gitignoreGenerate(string projectName);
     void readmeGenerate(string projectName);
+
+    // Miscellanous
+    void userOption();
     bool isPythonAvailable();
-    // PyPI package management
-    bool installPackage(const string& package, const string& version);
-    bool installPackages(const vector<string>& packages);
-    bool downloadPackage(const string& package);
+    string apiCaller(string url);
+
+    // Package Downloaders
+    bool downloadPackage(string packageName, string version);
+    
+    // Package installers
+    bool installPackage(string package);
+    bool installPackages(vector<string> packages);
     
     // Pypi package info retriever
-    string getPackageInfo(const string& packageName);
-    string getLatestVersion(const string& packageName);
-    
-    // Wheel extraction and installation
-    bool extractWheelToVenv(const string& wheelPath, const string& venvPath);
-    bool createVirtualEnvironment(const string& venvPath);
-    bool testPackageInstallation(const string& packageName, const string& venvPath);
-    
+    Package getPackageInfo(string packageName);
+    string getLatestVersion(string packageName);
+
+    // Wheel extraction
+    bool extractWheelToVenv(string wheelPath, string venvPath);
+    bool createVirtualEnvironment(string venvPath);
+
     // Dead.lock file management functions
-    bool generateDeadLockFile(const string& projectPath = ".");
-    bool loadDeadLockFile(const string& projectPath = ".");
-    bool updateDeadLockFile(const string& packageName, const string& version);
-    bool removeFromDeadLockFile(const string& packageName);
-    bool validateDeadLockFile(const string& projectPath = ".");
+    bool generateDeadLockFile(string projectPath = gProjectName);
+    bool loadDeadLockFile(string projectPath = gProjectName);
+    
+    bool updateDeadLockFile(Package pkg);
+    bool removeFromDeadLockFile(string packageName);
     
     // Dead.lock file operations
-    vector<PackageDependency> getInstalledPackages() const;
-    PackageDependency getPackageDependency(const string& packageName) const;
-    bool isPackageInstalled(const string& packageName) const;
-    bool syncFromDeadLock(const string& projectPath = ".");
+    bool isPackageInstalled(string packageName) ;
+    bool syncFromDeadLock(string projectPath = gProjectName);
     
     // Dead.lock file utilities
-    string getDeadLockFilePath(const string& projectPath = ".") const;
-    string getCurrentTimestamp() const;
-    string calculatePackageHash(const string& packageName, const string& version) const;
-    vector<string> getPackageDependencies(const string& packageName, const string& version) const;
+    string getDeadLockFilePath(string projectPath = gProjectName) ;
+    string getCurrentTimestamp();
+    vector<string> getPackageDependencies(string packageName) ;
+    vector<Package> getInstalledPackages();
+    string readDeadLockFile(string filePath);
     
 private:
-    // Helper functions for wheel extraction
-    bool renameWheelToZip(const string& wheelPath, string& zipPath);
-    bool extractZipFile(const string& zipPath, const string& extractPath);
-    bool parseAndExtractZip(const vector<unsigned char>& zipData, const string& extractPath);
+    // Installation tracking
+    vector<Package> loadedPackages;
+    set<string> dependencyPackages; // Track packages that are dependencies
     
-    // Private dead.lock file helpers
-    map<string, PackageDependency> installedPackages;
-    bool parseDeadLockJson(const string& jsonContent);
-    string generateDeadLockJson() const;
-    bool writeDeadLockFile(const string& content, const string& filePath) const;
-    string readDeadLockFile(const string& filePath) const;
-    bool backupDeadLockFile(const string& filePath) const;
-    bool validatePackageEntry(const PackageDependency& package) const;
+    // Helper functions for wheel extraction
+    bool renameWheelToZip(string wheelPath, string zipPath);
+    bool extractZipFile(string zipPath, string extractPath);
+    bool parseAndExtractZip( vector<unsigned char> zipData, string extractPath);
+
+    // Dead.lock file methods
+    bool parseDeadLockJson(string jsonContent);
+    string generateDeadLockJson();
+    bool isPkgInDeadLock(string packageName);
+    bool writeDeadLockFile(string content, string filePath) ;
 };

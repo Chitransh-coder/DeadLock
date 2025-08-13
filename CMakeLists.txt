@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(DeadLock VERSION 1.0.0)
 
+# Force static linking
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_LINK_SEARCH_START_STATIC ON)
+set(CMAKE_LINK_SEARCH_END_STATIC ON)
+
+# Set vcpkg to use static libraries
+set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+set(VCPKG_LIBRARY_LINKAGE "static")
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,22 +28,39 @@ find_package(ZLIB QUIET)
 # Check if we're using vcpkg
 if(DEFINED ENV{VCPKG_ROOT} OR DEFINED CMAKE_TOOLCHAIN_FILE)
     message(STATUS "Using vcpkg for dependencies")
-    
-    # If vcpkg packages not found, show warning but continue
+      # If vcpkg packages not found, fall back to local libraries
     if(NOT CURL_FOUND)
-        message(WARNING "CURL not found via vcpkg, using local headers")
-        set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
-        set(CURL_LIBRARIES "")
-        set(CURL_FOUND TRUE)
+        message(WARNING "CURL not found via vcpkg, using local library")
+        set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR})
+        
+        # Try to find static CURL library first
+        find_library(CURL_LIBRARY 
+            NAMES libcurl_a.lib libcurl.lib curl.lib libcurl curl
+            PATHS 
+                ${CMAKE_CURRENT_SOURCE_DIR}/lib
+                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/curl
+                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/
+            PATH_SUFFIXES lib libs
+            NO_DEFAULT_PATH
+        )
+        
+        if(CURL_LIBRARY)
+            message(STATUS "Found local CURL: ${CURL_LIBRARY}")
+            set(CURL_LIBRARIES ${CURL_LIBRARY})
+            set(CURL_FOUND TRUE)
+        else()
+            message(WARNING "CURL library not found, using headers only")
+            set(CURL_LIBRARIES "")
+            set(CURL_FOUND FALSE)
+        endif()
     endif()
-    
+
     if(NOT ZLIB_FOUND)
         message(WARNING "ZLIB not found via vcpkg, using local library")
         find_library(ZLIB_LIBRARY 
-            NAMES zd
+            NAMES zd.lib zsd.lib zd
             PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib
-            NO_DEFAULT_PATH
-        )
+            NO_DEFAULT_PATH        )
         
         if(ZLIB_LIBRARY)
             message(STATUS "Found local ZLIB: ${ZLIB_LIBRARY}")
@@ -47,12 +74,12 @@ if(DEFINED ENV{VCPKG_ROOT} OR DEFINED CMAKE_TOOLCHAIN_FILE)
 else()
     message(STATUS "Not using vcpkg, using local libraries")
     # Use local libraries
-    set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR}/curl)
+    set(CURL_INCLUDE_DIRS ${THIRD_PARTY_DIR})
     set(CURL_LIBRARIES "")
-    set(CURL_FOUND TRUE)
+    set(CURL_FOUND FALSE)
     
     find_library(ZLIB_LIBRARY 
-        NAMES zd
+        NAMES zd.lib zsd.lib zd
         PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib
         NO_DEFAULT_PATH
     )
@@ -127,8 +154,23 @@ endif()
 
 # Add Windows networking libraries for CURL functionality
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE wininet ws2_32 wldap32 crypt32 normaliz)
+    # Static linking requires these system libraries
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        wininet 
+        ws2_32 
+        wldap32 
+        crypt32 
+        normaliz 
+        advapi32 
+        user32 
+        bcrypt
+    )
     target_compile_definitions(${PROJECT_NAME} PRIVATE CURL_STATICLIB)
+    
+    # Set static runtime linking for MSVC
+    if(MSVC)
+        set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
 endif()
 
 # Link filesystem library for C++17
