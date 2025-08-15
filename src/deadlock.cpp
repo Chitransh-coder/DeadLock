@@ -88,6 +88,16 @@ bool createDirectoryRecursive(const string& path) {
     return true;
 }
 
+/**
+* @brief Perform an HTTP Get request to the given URL Using cURL.
+*
+*This function initializes a cURL session sends the request, collect the response and return the server's reply as the string.
+* 
+*@param url The target URL to which the HTTP GET request will be send.
+*
+*@return std::string The response body from the server, or an empty string if the request fails. 
+*/
+
 string DeadLock::apiCaller(string url) {
     CURL* curl = curl_easy_init();
     string response;
@@ -120,7 +130,7 @@ string DeadLock::apiCaller(string url) {
     }
     return response;
 }
-/*
+/**
 * @brief Initializes the environment and creates project
 * 
 * This function gets invoked when `create` argument is passed in CLI.
@@ -151,6 +161,12 @@ void DeadLock::init(string projectName) {
     readmeGenerate(projectName);
     std::cout << "Project " << projectName << " created successfully!" << std::endl;
 }
+
+/**
+*@brief Generate the Python notebook.
+*
+*@param projectName The name of the project.
+*/
 
 void DeadLock::notebookGenerate(string projectName) {
         string noteBookName = projectName + ".ipynb";
@@ -194,6 +210,12 @@ void DeadLock::notebookGenerate(string projectName) {
     }
 }
 
+/**
+*@brief Generate the Python File.
+*
+*@param projectName The name of the project.
+*/
+
 void DeadLock::pyFileGenerate(string projectName) {
     string pyfileName = projectName + ".py";
     ofstream pyFile(pyfileName);
@@ -206,6 +228,12 @@ void DeadLock::pyFileGenerate(string projectName) {
     }
     
 }
+
+/**
+*@brief Generate the .gitignore.
+*
+*@param projectName The name of the project.
+*/
 
 void DeadLock::gitignoreGenerate(string projectName) {
     string gitignorefileName = ".gitignore";
@@ -252,6 +280,12 @@ void DeadLock::gitignoreGenerate(string projectName) {
     }
 }
 
+/**
+*@brief Generate the README.md.
+*
+*@param projectName The name of the project.
+*/
+
 void DeadLock::readmeGenerate(string projectName) {
     string readmeFileName = "README.md";
     ofstream readmeFile(readmeFileName);
@@ -265,6 +299,11 @@ void DeadLock::readmeGenerate(string projectName) {
     }
 }
 
+/**
+ *@brief Checks if Python is installed and accessible in the system's PATH.
+ * 
+ *@return bool True if Python is available in the PATH, false otherwise.
+ */
 bool DeadLock::isPythonAvailable() {
     #ifdef _WIN32
     int result = system("where python >nul 2>nul");
@@ -273,6 +312,19 @@ bool DeadLock::isPythonAvailable() {
     #endif
     return result == 0;
 }
+
+/**
+ *@brief Downloads a platform-compatible Python package wheel from PyPI.
+ * 
+ * This function retrieves package metadata from the PyPI JSON API for the given package name
+ * and version, determines the appropriate wheel file for the current operating system
+ * (Windows, macOS, or Linux), and downloads it to the local "downloads" directory.
+ * If the version is not provided, the latest available version is fetched automatically.
+ * 
+ *@param packageName The name of the Python package to download.
+ *@param version The version of the package to download. If empty, the latest version is used.
+ *@return bool True if the package is successfully downloaded, false otherwise.
+ */
 
 bool DeadLock::downloadPackage(string packageName, string version) {
     if (version.empty()) {
@@ -485,6 +537,17 @@ bool DeadLock::installPackages(vector<string> packages) {
     return true;
 }
 
+/**
+ * @brief Retrieves package metadata from the PyPI JSON API.
+ * 
+ * This function sends an HTTP GET request to the PyPI JSON API for the specified package,
+ * parses the response to extract key package information including name, latest version,
+ * source designation, and dependencies.
+ * 
+ * @param packageName The name of the package to query on PyPI.
+ * @return Package An object containing package details such as name, version, source, and dependencies.
+ */
+
 Package DeadLock::getPackageInfo(string packageName) {
     Package pkg;
     string url = "https://pypi.org/pypi/" + packageName + "/json";
@@ -505,6 +568,15 @@ Package DeadLock::getPackageInfo(string packageName) {
     return pkg;
 }
 
+/**
+ * @brief Retrieves the latest version of a package from PyPI.
+ * 
+ * This function queries the PyPI JSON API for the specified package and extracts the latest version
+ * from the response.
+ * 
+ * @param packageName The name of the package to query on PyPI.
+ * @return string The latest version of the package, or an empty string if not found.
+ */
 string DeadLock::getLatestVersion( string packageName) {
     string url = "https://pypi.org/pypi/" + packageName + "/json";
     string info = apiCaller(url);
@@ -532,6 +604,17 @@ string DeadLock::getLatestVersion( string packageName) {
     }
     return "";
 }
+
+/**
+ * @brief Creates a virtual environment at the specified path.
+ * 
+ * This function checks if a virtual environment already exists at the given path,
+ * and if not, it creates a new virtual environment using Python's venv module.
+ * 
+ * @param venvPath The path where the virtual environment should be created.
+ * @return bool True if the virtual environment was successfully created or already exists, false otherwise.
+ */
+
 
 bool DeadLock::createVirtualEnvironment( string venvPath) {
     // Check if virtual environment already exists
@@ -575,6 +658,16 @@ bool DeadLock::createVirtualEnvironment( string venvPath) {
 #endif
 }
 
+/**
+ * @brief Renames a wheel file to a zip file.
+ * 
+ * This function renames the specified wheel file to a zip file by changing its extension.
+ * 
+ * @param wheelPath The path to the wheel file to be renamed.
+ * @param zipPath The path where the renamed zip file will be saved.
+ * @return bool True if the renaming was successful, false otherwise.
+ */
+
 bool DeadLock::renameWheelToZip( string wheelPath, string zipPath) {
     // Generate zip file path
     zipPath = wheelPath;
@@ -602,6 +695,17 @@ bool DeadLock::renameWheelToZip( string wheelPath, string zipPath) {
     
     return true;
 }
+
+/**
+    * @brief Extracts a ZIP file to the specified directory using zlib.
+    * This function reads the ZIP file into memory, parses its contents,
+    * and extracts the files to the specified directory.
+    * 
+    * @param zipPath The path to the ZIP file to be extracted.
+    * @param extractPath The directory where the contents of the ZIP file will be extracted.
+    * 
+    * @return bool True if the extraction was successful, false otherwise.
+ */
 
 bool DeadLock::extractZipFile( string zipPath,  string extractPath) {
     FILE* file = fopen(zipPath.c_str(), "rb");
@@ -658,7 +762,17 @@ bool DeadLock::extractZipFile( string zipPath,  string extractPath) {
     std::cout << "ZIP extraction completed successfully using zlib" << std::endl;
     return true;
 }
-
+/**
+ * @brief Extracts a wheel file to the specified virtual environment.
+ * This function renames the wheel file to a zip file, extracts its contents
+ * to a temporary directory, and then copies the extracted files
+ * to the site-packages directory of the virtual environment.
+ * 
+ * @param wheelPath The path to the wheel file to be extracted.
+ * @param venvPath The path to the virtual environment where the package will be installed.
+ * 
+ * @return bool True if the extraction and installation were successful, false otherwise.
+ */
 bool DeadLock::extractWheelToVenv( string wheelPath,  string venvPath) {
     // Rename wheel to zip
     string sitePackagesPath;
@@ -717,7 +831,17 @@ bool DeadLock::extractWheelToVenv( string wheelPath,  string venvPath) {
     std::cout << "Package successfully extracted to virtual environment!" << std::endl;
     return true;
 }
-
+/**
+    * @brief Parses a ZIP file and extracts its contents to the specified directory.
+    * 
+    * This function reads the ZIP file data, locates the End of Central Directory (EOCD),
+    * parses the central directory entries, and extracts each file to the specified path.
+    * 
+    * @param zipData The raw data of the ZIP file as a vector of unsigned chars.
+    * @param extractPath The directory where the contents of the ZIP file will be extracted.
+    * 
+    * @return bool True if the extraction was successful, false otherwise.
+ */
 bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractPath) {
     std::cout << "Parsing ZIP file with zlib decompression..." << std::endl;
     
