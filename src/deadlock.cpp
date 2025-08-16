@@ -457,8 +457,8 @@ bool DeadLock::downloadPackage(string packageName, string version) {
 }
 
 bool DeadLock::installPackage(string package) {
-    ifstream deadLockFile(getDeadLockFilePath());
-    if (deadLockFile) {
+    ifstream fileExists(getDeadLockFilePath());
+    if (fileExists) {
         std::cout << "dead.lock file found, updating file" << std::endl;
     } else {
         std::cout << "dead.lock file not found, generating a new one" << std::endl;
@@ -466,6 +466,27 @@ bool DeadLock::installPackage(string package) {
         if (!succ) {
             std::cout << "Error generating new dead.lock file" << std::endl;
         }
+    }
+    if (isPackageInstalled(package)) {
+        std::cout << "Package already installed" << std::endl;
+        return true;
+    }
+    string deadLockStr = readDeadLockFile(getDeadLockFilePath());
+    try {
+        json deadLockJSON = json::parse(deadLockStr);
+        if(deadLockJSON.contains("packages")) {
+            Package pkg = getPackageInfo(package);
+            if (pkg.empty()) {
+                std::cerr << "Error finding information about " << package << std::endl;
+            }
+            pkg.installDate = getCurrentTimestamp();
+            updateDeadLockFile(pkg);
+
+        } else {
+
+        }
+    } catch(json::exception& e) {
+        std::cerr << "Error parsing JSON" << e.what() << std::endl;
     }
     return true;
 }
@@ -614,7 +635,6 @@ string DeadLock::getLatestVersion( string packageName) {
  * @param venvPath The path where the virtual environment should be created.
  * @return bool True if the virtual environment was successfully created or already exists, false otherwise.
  */
-
 
 bool DeadLock::createVirtualEnvironment( string venvPath) {
     // Check if virtual environment already exists
@@ -958,7 +978,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
             // Handle empty files
             if (uncompressedSize != 0) {
                 z_stream strm = {};
-                strm.next_in = _cast<unsigned char*>(zipData.data() + dataOffset);
+                strm.next_in = const_cast<unsigned char*>(zipData.data() + dataOffset);
                 strm.avail_in = compressedSize;
                 strm.next_out = decompressedData.data();
                 strm.avail_out = uncompressedSize;
@@ -1006,12 +1026,12 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
 }
 
 bool DeadLock::generateDeadLockFile( string projectPath) {
-    string lockFilePath = getDeadLockFilePath(projectPath);
+    string lockFilePath = getDeadLockFilePath();
     
     // Create the dead.lock file with initial structure
     json lockData = {
         {"generated", getCurrentTimestamp()},
-        {"packages", json::object()},
+        {"packages", json::array()},
         {"metadata", {
             {"python_version", ""},
             {"platform", 
@@ -1026,26 +1046,43 @@ bool DeadLock::generateDeadLockFile( string projectPath) {
             {"deadlock_version", "1.0.0"}
         }}
     };
-    
-    string content = lockData.dump(4);
-    bool success = writeDeadLockFile(content, lockFilePath);    
-    return success;
-}
-
-bool DeadLock::loadDeadLockFile( string projectPath) {
-    string lockFilePath = getDeadLockFilePath(projectPath);
-    string content = readDeadLockFile(lockFilePath);
-    
-    if (content.empty()) {
-        std::cout << "No dead.lock file found. Creating new one..." << std::endl;
-        return generateDeadLockFile(projectPath);
-    }
-    
-    return parseDeadLockJson(content);
+    return writeDeadLockFile(lockData.dump(4), lockFilePath);
 }
 
 bool DeadLock::updateDeadLockFile(Package pkg) {
-    return true;
+    string deadData = readDeadLockFile(getDeadLockFilePath());
+    json deadJSON;
+    if(deadData.empty()) {
+        std::cerr << "Error reading dead.lock file" << std::endl;
+        return false;
+    }
+    try {
+        deadJSON = json::parse(deadData);
+    } catch(json::exception& e) {
+        std::cerr << "Error reading JSON in dead.lock:" << e.what() << "\n" << "Regenerate? y/n: ";
+        string opt;
+        cin >> opt;
+        if(opt == "y") {
+             if(!generateDeadLockFile()) {
+                std::cerr << "Error generating dead.lock file" << std::endl;
+                return false;
+             }
+             deadJSON = json::parse(readDeadLockFile(getDeadLockFilePath()));
+        } else {
+            return false;
+        }
+    }
+    if(!deadJSON.contains("packages")) {
+        deadJSON["packages"] = json::array();
+    }
+    deadJSON["packages"].push_back({
+        {"name", pkg.name},
+        {"version", pkg.version},
+        {"source",pkg.source},
+        {"install_date", pkg.installDate},
+        {"dependencies", pkg.dependencies}
+    });
+    return writeDeadLockFile(deadJSON.dump(4), getDeadLockFilePath());
 }
 
 bool DeadLock::removeFromDeadLockFile( string packageName) {
@@ -1063,7 +1100,7 @@ bool DeadLock::removeFromDeadLockFile( string packageName) {
     loadedPackages.erase(it);
     
     // Write updated dead.lock file
-    string lockFilePath = getDeadLockFilePath(".");
+    string lockFilePath = getDeadLockFilePath();
     string content = generateDeadLockJson();
     
     bool success = writeDeadLockFile(content, lockFilePath);
@@ -1076,15 +1113,39 @@ bool DeadLock::removeFromDeadLockFile( string packageName) {
 }
 
 bool DeadLock::isPackageInstalled( string packageName)  {
-    return find(installedPackages.begin(), installedPackages.end(), packageName) != installedPackages.end();
+    string deadlockFileContent = readDeadLockFile(getDeadLockFilePath());
+    if (deadlockFileContent.empty()) {
+        std::cerr << "Error reading dead.lock file" << std::endl;
+        return false;
+    }
+    try {
+        json jsonData = json::parse(deadlockFileContent);
+        if (jsonData.contains("packages")) {
+            for (const auto pkg : jsonData["packages"]) {
+                if (packageName == pkg) {
+                    return true;
+                }
+            }
+        } else {
+            std::cout << "No packages installed in dead.lock file." << std::endl;
+            return false;
+        }
+    } catch (json::exception& e) {
+        std::cerr << "Error reading json object: " << e.what() << std::endl;
+        return false;
+    } catch (std::exception& e) {
+        std::cerr << "Error finding " << packageName << "in dead.lock file: " << e.what() << std::endl;
+        return false;
+    }
+    return false;
 }
 
 bool DeadLock::syncFromDeadLock( string projectPath) {
-    if (!loadDeadLockFile(projectPath)) {
-        std::cerr << "Failed to load dead.lock file" << std::endl;
+    ifstream fileExists(getDeadLockFilePath());
+    if (!fileExists) {
+        std::cerr << "No dead.lock file found." << std::endl;
         return false;
     }
-    
     std::cout << "Syncing packages from dead.lock file..." << std::endl;
     
     // Extract package names from loadedPackages for installation
@@ -1107,8 +1168,14 @@ bool DeadLock::syncFromDeadLock( string projectPath) {
     return installPackages(packageNames);
 }
 
-string DeadLock::getDeadLockFilePath( string projectPath)  {
-    return projectPath + "/dead.lock";
+/**
+ * @brief Returns path of dead.lock file.
+ * 
+ * @returns std:string The path of dead.lock file
+ */
+
+string DeadLock::getDeadLockFilePath()  {
+    return "./dead.lock";
 }
 
 string DeadLock::getCurrentTimestamp()  {
@@ -1121,6 +1188,16 @@ string DeadLock::getCurrentTimestamp()  {
     }
     return timestamp;
 }
+
+/**
+ * @brief Gets ***necessary*** required packages of the provided package.
+ * 
+ * This function queries PYPI and retrieves info about all the required dependencies of the provided  package.
+ * 
+ * @param packageName The name of the package whose dependencies are required.
+ * 
+ * @returns An array containing names of required deoendencies.
+ */
 
 vector<string> DeadLock::getPackageDependencies( string packageName) {
     // Get package info and extract dependencies
@@ -1168,43 +1245,11 @@ vector<string> DeadLock::getPackageDependencies( string packageName) {
     return dependencies;
 }
 
-// Private helper functions
-bool DeadLock::parseDeadLockJson( string jsonContent) {
-    try {
-        json lockData = json::parse(jsonContent);
-        
-        if (!lockData.contains("packages")) {
-            std::cerr << "Invalid dead.lock format: missing packages section" << std::endl;
-            return false;
-        }
-        
-        loadedPackages.clear();
-        
-        for ( auto& item : lockData["packages"].items()) {
-             string packageName = item.key();
-             auto& packageInfo = item.value();
-            Package pkg;
-            pkg.name = packageName;
-            pkg.version = packageInfo.value("version", "");
-            pkg.source = packageInfo.value("source", "pypi");
-            pkg.installDate = packageInfo.value("install_date", "");
-            loadedPackages.push_back(pkg);
-        }
-        
-        std::cout << "Loaded " << loadedPackages.size() << " packages from dead.lock file" << std::endl;
-        return true;
-        
-    } catch (json::exception& e) {
-        std::cerr << "Error parsing dead.lock file: " << e.what() << std::endl;
-        return false;
-    }
-}
-
 string DeadLock::generateDeadLockJson()  {
     json lockData = {
         {"version", "1.0"},
         {"generated", getCurrentTimestamp()},
-        {"packages", json::object()},
+        {"packages", json::array()},
         {
             {"python_version", ""},
             {"platform", 
@@ -1255,7 +1300,6 @@ string DeadLock::readDeadLockFile( string filePath)  {
     if (!file) {
         return ""; // File doesn't exist
     }
-    
     stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();

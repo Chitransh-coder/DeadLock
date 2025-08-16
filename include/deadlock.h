@@ -44,17 +44,16 @@ public:
 
     // Dead.lock file management functions
     bool generateDeadLockFile(string projectPath = gProjectName);
-    bool loadDeadLockFile(string projectPath = gProjectName);
     
     bool updateDeadLockFile(Package pkg);
     bool removeFromDeadLockFile(string packageName);
     
     // Dead.lock file operations
-    bool isPackageInstalled(string packageName) ;
+    bool isPackageInstalled(string packageName);
     bool syncFromDeadLock(string projectPath = gProjectName);
     
     // Dead.lock file utilities
-    string getDeadLockFilePath(string projectPath = gProjectName) ;
+    string getDeadLockFilePath();
     string getCurrentTimestamp();
     vector<string> getPackageDependencies(string packageName) ;
     vector<Package> getInstalledPackages();
@@ -71,7 +70,6 @@ private:
     bool parseAndExtractZip( vector<unsigned char> zipData, string extractPath);
 
     // Dead.lock file methods
-    bool parseDeadLockJson(string jsonContent);
     string generateDeadLockJson();
     bool isPkgInDeadLock(string packageName);
     bool writeDeadLockFile(string content, string filePath) ;

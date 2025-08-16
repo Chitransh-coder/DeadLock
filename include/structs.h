@@ -63,4 +63,7 @@ struct Package {
     string source;
     string installDate;
     vector<string> dependencies;
+    bool empty() const {
+        return !name.empty() && !version.empty();
+    }
 };
