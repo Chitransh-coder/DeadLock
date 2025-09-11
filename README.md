@@ -5,15 +5,10 @@
 ![Language](https://img.shields.io/badge/language-C%2B%2B-blue.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![GitHub stars](https://img.shields.io/github/stars/Chitransh-coder/DeadLock.svg?style=social)
-![GitHub forks](https://img.shields.io/github/forks/Chitransh-coder/DeadLock.svg?style=social)
-![GitHub issues](https://img.shields.io/github/issues/Chitransh-coder/DeadLock.svg)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/Chitransh-coder/DeadLock.svg)
-![Contributors](https://img.shields.io/github/contributors/Chitransh-coder/DeadLock.svg)
 ![Last commit](https://img.shields.io/github/last-commit/Chitransh-coder/DeadLock.svg)
 ![Code size](https://img.shields.io/github/languages/code-size/Chitransh-coder/DeadLock.svg)
 ![Top language](https://img.shields.io/github/languages/top/Chitransh-coder/DeadLock.svg)
-![Downloads](https://img.shields.io/github/downloads/Chitransh-coder/DeadLock/total.svg)
 
 ## Table of Contents
 
