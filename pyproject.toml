@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DeadLock"
+description = 'A Project Manager made for Data scientists'
+readme = "README.md"
+version = "1.0.0"
+authors = [
+    {name = "Chitransh Soral", email = "chitranshsoral13@gmail.com"}
+]
+requires-python = ">=3.11"
+
+[project.scripts]
+dl = "lock:main"
