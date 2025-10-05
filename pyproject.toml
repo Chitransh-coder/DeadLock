@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "pybind11>=2.10.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,3 +14,8 @@ requires-python = ">=3.11"
 
 [project.scripts]
 dl = "lock:main"
+
+[tool.setuptools.packages.find]
+where = ["DeadLock/src"]
+include = ["DeadLock*"]
+exclude = ["vcpkg", "vcpkg_installed", "build"]

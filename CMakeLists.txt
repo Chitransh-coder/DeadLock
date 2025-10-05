@@ -17,9 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Define source and include directories
-set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ ${PROJECT_NAME}/include)
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ ${PROJECT_NAME}/src)
+set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ ${PROJECT_NAME}/third_party)
 
 # Try to find packages using vcpkg first, then fall back to local libraries
 find_package(CURL QUIET)

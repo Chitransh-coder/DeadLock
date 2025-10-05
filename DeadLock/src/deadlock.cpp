@@ -27,7 +27,6 @@
 #endif
 using json = nlohmann::json;
 
-// Define the static member
 string DeadLock::gProjectName = ".";
 
 // Function to download a file and save it to disk
@@ -128,6 +127,7 @@ string DeadLock::apiCaller(string url) {
     }
     return response;
 }
+
 /**
 * @brief Initializes the environment and creates project
 * 
@@ -448,10 +448,12 @@ bool DeadLock::downloadPackage(string packageName, string version) {
         return false;
     }
 }
+
 /**
  * @brief Installs the package in `site-packages` directory
  * 
- * 
+ * @param package String containing name of the package
+ * @return `True` if the package was successfully installed
  */
 bool DeadLock::installPackage(string package) {
     ifstream fileExists(getDeadLockFilePath());
@@ -464,6 +466,7 @@ bool DeadLock::installPackage(string package) {
             std::cout << "Error generating new dead.lock file" << std::endl;
         }
     }
+    fileExists.close();
     if (isPackageInstalled(package)) {
         std::cout << "Package already installed" << std::endl;
         return true;
@@ -480,7 +483,6 @@ bool DeadLock::installPackage(string package) {
             updateDeadLockFile(pkg);
 
         } else {
-
         }
     } catch(json::exception& e) {
         std::cerr << "Error parsing JSON" << e.what() << std::endl;
@@ -775,6 +777,7 @@ bool DeadLock::extractZipFile( string zipPath,  string extractPath) {
     std::cout << "ZIP extraction completed successfully using zlib" << std::endl;
     return true;
 }
+
 /**
  * @brief Extracts a wheel file to the specified virtual environment.
  * This function renames the wheel file to a zip file, extracts its contents
@@ -844,6 +847,7 @@ bool DeadLock::extractWheelToVenv( string wheelPath,  string venvPath) {
     std::cout << "Package successfully extracted to virtual environment!" << std::endl;
     return true;
 }
+
 /**
     * @brief Parses a ZIP file and extracts its contents to the specified directory.
     * 
