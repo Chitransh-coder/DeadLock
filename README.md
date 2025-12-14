@@ -12,6 +12,9 @@
 
 ## Table of Contents
 
+<details>
+<summary>Click to expand</summary>
+
 - [DeadLock](#deadlock)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
@@ -45,7 +48,8 @@
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
   - [Status](#status)
-
+</details>
+<hr>
 A smart way to manage your data science projects with pre-configured templates, dependency tracking and installation, etc.
 
 ## Features
@@ -61,8 +65,6 @@ A smart way to manage your data science projects with pre-configured templates, 
 - **Sync Functionality**: Sync packages from `dead.lock` file across environments.
 - **Wheel File Handling**: Direct wheel file download and extraction.
 - **Dependency Tracking**: Track and manage package dependencies with install dates.
-
-
 
 ## Installation
 
@@ -83,6 +85,7 @@ A smart way to manage your data science projects with pre-configured templates, 
 ### Building from Source
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Chitransh-coder/DeadLock.git
    cd DeadLock
@@ -91,17 +94,20 @@ A smart way to manage your data science projects with pre-configured templates, 
 2. **Install system dependencies**
 
    **Ubuntu/Debian:**
+
    ```bash
    sudo apt-get update
    sudo apt-get install build-essential cmake libcurl4-openssl-dev zlib1g-dev
    ```
 
    **macOS:**
+
    ```bash
    brew install cmake curl zlib
    ```
 
    **Windows:**
+
    ```bash
    # Install vcpkg first
    git clone https://github.com/Microsoft/vcpkg.git
@@ -123,6 +129,7 @@ deadlock create <project-name>
 ```
 
 This will:
+
 - Set up a virtual environment.
 - Generate project files (`.ipynb`, `.py`, `.gitignore`, `README.md`).
 - Create a `dead.lock` file for dependency tracking.
@@ -144,6 +151,7 @@ deadlock info <package-name>
 ```
 
 Example output:
+
 ```
 Package: tensorflow
 Latest version: 2.13.0
@@ -168,20 +176,22 @@ Shows all packages from the `dead.lock` file with versions and dependencies.
 
 ## Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `create <name>` | Create a new project | `deadlock create my-project` |
-| `install <packages...>` | Install Python packages | `deadlock install pandas numpy` |
-| `info <package>` | Get package information | `deadlock info tensorflow` |
-| `sync` | Install from dead.lock file | `deadlock sync` |
-| `list` | List installed packages | `deadlock list` |
+| Command                 | Description                 | Example                         |
+| ----------------------- | --------------------------- | ------------------------------- |
+| `create <name>`         | Create a new project        | `deadlock create my-project`    |
+| `install <packages...>` | Install Python packages     | `deadlock install pandas numpy` |
+| `info <package>`        | Get package information     | `deadlock info tensorflow`      |
+| `sync`                  | Install from dead.lock file | `deadlock sync`                 |
+| `list`                  | List installed packages     | `deadlock list`                 |
 
 ## Project Templates
 
 DeadLock has pre-configured templates from which you can kickstart your project, you can choose between the following options:
 
 ### 1. Basic Data Science
+
 Pre-installed packages for simple data analysis tasks:
+
 - pandas
 - numpy
 - scikit-learn
@@ -190,16 +200,21 @@ Pre-installed packages for simple data analysis tasks:
 - scipy
 
 ### 2. Computer Vision
+
 Choose between:
+
 - **TensorFlow**: Installs TensorFlow, OpenCV, etc. in the virtual environment.
 - **PyTorch**: Installs torch, torchvision, OpenCV, etc. in the isolated virtual environment.
 
 ### 3. Natural Language Processing
+
 Choose between:
+
 - **TensorFlow**: Installs TensorFlow in addition to tokenizer, nltk, embeddings, etc. in the virtual environment.
 - **PyTorch**: Installs torch in addition to tokenizer, nltk, embeddings, etc. in the virtual environment.
 
 ### 4. Empty Project
+
 No pre-installed packages, clean slate for custom setups.
 
 ## Dead.lock File
@@ -207,6 +222,7 @@ No pre-installed packages, clean slate for custom setups.
 The `dead.lock` file ensures reproducible builds by tracking exact package versions and dependencies.
 
 ### Structure
+
 ```json
 {
   "version": "1.0",
@@ -232,9 +248,11 @@ The `dead.lock` file ensures reproducible builds by tracking exact package versi
 ### Core Classes
 
 #### `DeadLock`
+
 Main class for dependency management.
 
 **Key Methods:**
+
 - `init(string projectName)` - Initialize new project
 - `installPackages(vector<string> packages)` - Install multiple packages
 - `getLatestVersion(string packageName)` - Get latest version from PyPI
@@ -243,6 +261,7 @@ Main class for dependency management.
 - `loadDeadLockFile(string projectPath)` - Load existing lock file
 
 #### `PackageDependency`
+
 Structure representing a package dependency.
 
 ```cpp
@@ -260,9 +279,11 @@ struct PackageDependency {
 Contributions are welcome. Please follow below guidelines if you have an idea or want a feature:
 
 ### Have an idea?
+
 Open a [GitHub issue](https://github.com/Chitransh-coder/DeadLock/issues)
 
 ### Want to Contribute with code?
+
 Open an issue and follow below steps:
 
 #### Contribution Guidelines
@@ -286,6 +307,7 @@ Open an issue and follow below steps:
 8. **Create a Pull Request**
 
 ### Code Style
+
 - Follow existing C++ coding conventions.
 - Variable and function names should follow smallCamelCase naming scheme.
 - Classes should follow UpperCamelCase naming scheme.
@@ -293,6 +315,7 @@ Open an issue and follow below steps:
 - Follow existing directory structure.
 
 ### Project Structure
+
 ```
 DeadLock/
 ├── src/                    # Source files
