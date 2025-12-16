@@ -1,0 +1,14 @@
+{
+  "name": "deadlock",
+  "version": "1.0.0",
+  "description": "DeadLock - Python Package Manager",
+  "dependencies": [
+    {
+      "name": "curl",
+      "features": ["ssl"]
+    },
+    "zlib",
+    "pybind11"
+  ],
+  "builtin-baseline": "0cf34c184ce990471435b5b9c92edcf7424930b1"
+}
