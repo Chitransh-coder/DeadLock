@@ -15,6 +15,7 @@ dist/
 *.egg-info/
 # Ignore IDE specific files
 .vscode/
+.vs/
 # Ignore Python virtual environments
 venv/
 *env
