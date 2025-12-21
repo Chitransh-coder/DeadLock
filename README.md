@@ -12,13 +12,14 @@
 
 ## Table of Contents
 
+<details>
+  <summary>Click to expand</summary>
+
 - [DeadLock](#deadlock)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
-    - [Required Dependencies](#required-dependencies)
-    - [Building from Source](#building-from-source)
     - [Creating a New Project](#creating-a-new-project)
     - [Installing Packages](#installing-packages)
     - [Getting Package Information](#getting-package-information)
@@ -32,10 +33,9 @@
     - [4. Empty Project](#4-empty-project)
   - [Dead.lock File](#deadlock-file)
     - [Structure](#structure)
-  - [API Reference](#api-reference)
-    - [Core Classes](#core-classes)
+  - [Code Walkthrough](#code-walkthrough)
       - [`DeadLock`](#deadlock-1)
-      - [`PackageDependency`](#packagedependency)
+      - [`Package`](#package)
   - [Contributing](#contributing)
     - [Have an idea?](#have-an-idea)
     - [Want to Contribute with code?](#want-to-contribute-with-code)
@@ -44,7 +44,8 @@
     - [Project Structure](#project-structure)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
-  - [Status](#status)
+  - [Building from Source](#building-from-source)
+</details>
 
 A smart way to manage your data science projects with pre-configured templates, dependency tracking and installation, etc.
 
@@ -62,59 +63,11 @@ A smart way to manage your data science projects with pre-configured templates, 
 - **Wheel File Handling**: Direct wheel file download and extraction.
 - **Dependency Tracking**: Track and manage package dependencies with install dates.
 
-
-
 ## Installation
 
 ### Prerequisites
 
 - **Python 3.7+** installed and available in PATH
-- **C++ compiler** (GCC, Clang, or MSVC)
-- **CMake 3.15+**
-- **Git**
-
-### Required Dependencies
-
-- **libcurl** - For HTTP requests to PyPI
-- **zlib** - For ZIP/wheel file extraction
-- **nlohmann/json** - For JSON parsing
-- **CLI11** - For command-line interface
-
-### Building from Source
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Chitransh-coder/DeadLock.git
-   cd DeadLock
-   ```
-
-2. **Install system dependencies**
-
-   **Ubuntu/Debian:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install build-essential cmake libcurl4-openssl-dev zlib1g-dev
-   ```
-
-   **macOS:**
-   ```bash
-   brew install cmake curl zlib
-   ```
-
-   **Windows:**
-   ```bash
-   # Install vcpkg first
-   git clone https://github.com/Microsoft/vcpkg.git
-   cd vcpkg
-   .\bootstrap-vcpkg.bat
-   .\vcpkg install curl zlib
-   ```
-
-3. **Build the project**
-   ```bash
-   cmake --preset debug
-   cmake --build build --config debug
-   ```
 
 ### Creating a New Project
 
@@ -227,9 +180,7 @@ The `dead.lock` file ensures reproducible builds by tracking exact package versi
 }
 ```
 
-## API Reference
-
-### Core Classes
+## Code Walkthrough
 
 #### `DeadLock`
 Main class for dependency management.
@@ -242,16 +193,19 @@ Main class for dependency management.
 - `syncFromDeadLock(string projectPath)` - Sync from lock file
 - `loadDeadLockFile(string projectPath)` - Load existing lock file
 
-#### `PackageDependency`
-Structure representing a package dependency.
+#### `Package`
+Structure representing a package.
 
 ```cpp
-struct PackageDependency {
+struct Package {
     string name;
     string version;
     string source;
     string installDate;
     vector<string> dependencies;
+    bool empty() const {
+        return !name.empty() && !version.empty();
+    }
 };
 ```
 
@@ -269,9 +223,11 @@ Open an issue and follow below steps:
 
 1. **Fork the repository**
 2. **Create a feature branch**
+
    ```bash
    git checkout -b feature/amazing-feature
    ```
+
 3. **Make your changes**
 4. **Test your Changes**
 5. **Ensure code quality**
@@ -297,7 +253,7 @@ Open an issue and follow below steps:
 DeadLock/
 ├── src/                    # Source files
 │   ├── deadlock.cpp       # Main implementation
-│   └── lock.cpp          # CLI interface
+│   └── lock.cpp          # Python Bindings
 ├── include/               # Header files
 │   ├── deadlock.h        # Main header
 │   ├── structs.h         # Data structures
@@ -311,19 +267,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [CLI11](https://github.com/CLIUtils/CLI11) for command-line parsing
 - [nlohmann/json](https://github.com/nlohmann/json) for JSON handling
 - [libcurl](https://curl.se/libcurl/) for HTTP requests
 - [zlib](https://zlib.net/) for compression support
+- [PyBind11](https://github.com/pybind/pybind11) for binding C++ with Python
 
-## Status
+## Building from Source
 
-- ✅ Core functionality implemented
-- ✅ Cross-platform support
-- ✅ PyPI integration
-- ✅ Virtual environment management
-- 🔄 Dependency resolution improvements
+ - **Clone the repository**
+   ```bash
+   git clone https://github.com/Chitransh-coder/DeadLock.git
+   cd DeadLock
+   ```
 
+ - **Install system dependencies:**
+
+    **Linux (Ubuntu/Debian):**
+    ```bash
+    git clone https://github.com/Microsoft/vcpkg.git
+    ./vcpkg/bootstrap-vcpkg.sh
+    ./vcpkg/vcpkg install
+    ```
+
+   **Windows:**
+   ```bash
+   # Install vcpkg first
+   git clone https://github.com/Microsoft/vcpkg.git
+   .\vcpkg\bootstrap-vcpkg.bat
+   .\vcpkg\vcpkg install
+   ```
+
+>Note: You may need to set VCPKG_ROOT environment variable to the vcpkg installation path.
+
+ - **Build the project**
+   ```bash
+   cmake --preset debug && cmake --build build
+   ```
 ---
 
 Made with ❤️ for the data science community.

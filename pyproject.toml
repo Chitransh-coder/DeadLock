@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "pybind11>=2.10.0"]
+requires = ["setuptools", "pybind11>=2.10.0", "wheel", "cmake>=3.16"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,9 +13,10 @@ authors = [
 requires-python = ">=3.11"
 
 [project.scripts]
-dl = "lock:main"
+dl = "deadlock.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["DeadLock/src"]
-include = ["DeadLock*"]
-exclude = ["vcpkg", "vcpkg_installed", "build"]
+[tool.setuptools]
+packages = ["deadlock"]
+
+[tool.setuptools.package-dir]
+deadlock = "DeadLock"

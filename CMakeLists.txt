@@ -9,8 +9,11 @@ set(SOURCES
     ${SRC_DIR}/lock.cpp
 )
 
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
+
 include(FetchContent)
 FetchContent_Declare(
     nlohmann_json
@@ -27,8 +30,7 @@ if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
-# Add executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+pybind11_add_module(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     CURL::libcurl
@@ -38,4 +40,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # Add include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${INCLUDE_DIR}
+    ${Python_INCLUDE_DIRS}
 )

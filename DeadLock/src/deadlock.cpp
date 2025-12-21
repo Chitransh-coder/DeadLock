@@ -25,7 +25,7 @@ using json = nlohmann::json;
 
 string DeadLock::gProjectName = ".";
 
-// Function to download a file and save it to disk
+// Function to write data to a file and save it to disk
 size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     return fwrite(ptr, size, nmemb, stream);
@@ -101,7 +101,7 @@ bool createDirectoryRecursive(const string &path)
  *
  * @param url The target URL to which the HTTP GET request will be send.
  *
- * @return std::string The response body from the server, or an empty string if the request fails.
+ * @returns std::string The response body from the server, or an empty string if the request fails.
  */
 string DeadLock::apiCaller(string url)
 {
@@ -295,7 +295,7 @@ void DeadLock::readmeGenerate(string projectName)
 /**
  * @brief Checks if Python is installed and accessible in the system's PATH.
  *
- * @return bool True if Python is available in the PATH, false otherwise.
+ * @returns `True` if Python is available in the PATH.
  */
 bool DeadLock::isPythonAvailable()
 {
@@ -317,7 +317,7 @@ bool DeadLock::isPythonAvailable()
  *
  * @param packageName The name of the Python package to download.
  * @param version The version of the package to download. If empty, the latest version is used.
- * @return bool True if the package is successfully downloaded, false otherwise.
+ * @returns `True` if the package is successfully downloaded.
  */
 bool DeadLock::downloadPackage(string packageName, string version)
 {
@@ -478,7 +478,7 @@ bool DeadLock::downloadPackage(string packageName, string version)
  * @brief Installs the package in `site-packages` directory
  *
  * @param package String containing name of the package
- * @return `True` if the package was successfully installed
+ * @returns `True` if the package was successfully installed.
  */
 bool DeadLock::installPackage(string package)
 {
@@ -612,7 +612,7 @@ bool DeadLock::installPackages(vector<string> packages)
  * source designation, and dependencies.
  *
  * @param packageName The name of the package to query on PyPI.
- * @return Package An object containing package details.
+ * @returns `Package` An object containing package details.
  */
 Package DeadLock::getPackageInfo(string packageName)
 {
@@ -647,7 +647,7 @@ Package DeadLock::getPackageInfo(string packageName)
  * from the response.
  *
  * @param packageName The name of the package to query on PyPI.
- * @return string The latest version of the package, or an empty string if not found.
+ * @returns The latest version of the package, or an empty string if not found.
  */
 string DeadLock::getLatestVersion(string packageName)
 {
@@ -698,7 +698,7 @@ string DeadLock::getLatestVersion(string packageName)
  * and if not, it creates a new virtual environment using Python's venv module.
  *
  * @param venvPath The path where the virtual environment should be created.
- * @return bool True if the virtual environment was successfully created or already exists, false otherwise.
+ * @returns `True` if the virtual environment was successfully created or already exists.
  */
 bool DeadLock::createVirtualEnvironment(string venvPath)
 {
@@ -754,7 +754,7 @@ bool DeadLock::createVirtualEnvironment(string venvPath)
  *
  * @param wheelPath The path to the wheel file to be renamed.
  * @param zipPath The path where the renamed zip file will be saved.
- * @return bool True if the renaming was successful, false otherwise.
+ * @returns `True` if the renaming was successful.
  */
 bool DeadLock::renameWheelToZip(string wheelPath, string zipPath)
 {
@@ -798,7 +798,7 @@ bool DeadLock::renameWheelToZip(string wheelPath, string zipPath)
  * @param zipPath The path to the ZIP file to be extracted.
  * @param extractPath The directory where the contents of the ZIP file will be extracted.
  *
- * @return bool True if the extraction was successful, false otherwise.
+ * @returns `True` if the extraction was successful.
  */
 bool DeadLock::extractZipFile(string zipPath, string extractPath)
 {
@@ -872,7 +872,7 @@ bool DeadLock::extractZipFile(string zipPath, string extractPath)
  * @param wheelPath The path to the wheel file to be extracted.
  * @param venvPath The path to the virtual environment where the package will be installed.
  *
- * @return bool True if the extraction and installation were successful, false otherwise.
+ * @returns `True` if the extraction and installation were successful.
  */
 bool DeadLock::extractWheelToVenv(string wheelPath, string venvPath)
 {
@@ -951,7 +951,7 @@ bool DeadLock::extractWheelToVenv(string wheelPath, string venvPath)
  * @param zipData The raw data of the ZIP file as a vector of unsigned chars.
  * @param extractPath The directory where the contents of the ZIP file will be extracted.
  *
- * @return bool True if the extraction was successful, false otherwise.
+ * @returns `True` if the extraction was successful.
  */
 bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractPath)
 {
@@ -1604,5 +1604,18 @@ bool DeadLock::isPkgInDeadLock(string packageName)
     string file = getDeadLockFilePath();
     string data = readDeadLockFile(file);
     // TODO: Write Implementation
+    return true;
+}
+
+/**
+ * @brief Uninstalls the specified packages from project and removes its reference in dead.lock
+ *
+ *
+ * @param packages Array containing package(s) name to be removed
+ *
+ * @returns `True` if package is removed.
+ */
+bool DeadLock::uninstallPackages(vector<string> packages) {
+    cout << "Uninstalling packages" << endl;
     return true;
 }

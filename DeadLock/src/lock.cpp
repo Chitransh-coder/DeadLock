@@ -1,28 +1,28 @@
 #include "../include/deadlock.h"
 #include <iostream>
 #include <vector>
+#include "../include/structs.h"
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
+namespace py = pybind11;
 using namespace std;
 
-int main(int argc, char **argv)
-{
-    try
-    {
-        DeadLock dl = DeadLock();
+PYBIND11_MODULE(_deadlock, d) {
+    d.doc() = "DeadLock - A Project Manager for Data Scientists";
 
-        // Create command
-        string project_name;
-        // Install PyPI packages command
-        vector<string> packages;
-        // Sync from dead.lock file command
-        // List installed packages command
-        // Debug Mode (Test a function)
-    }
-    catch (const exception &e)
-    {
-        cerr << "Error: " << e.what() << endl;
-        return 1;
-    }
-
-    return 0;
+    py::class_<DeadLock>(d, "DeadLock")
+        .def(py::init<>())
+        // Create Project
+        .def("create_project", &DeadLock::init)
+        // Install Packages
+        .def("install_packages", &DeadLock::installPackages)
+        // Sync from DeadLock
+        .def("sync_packages", &DeadLock::syncFromDeadLock)
+        // Get Package Info
+        .def("get_info", &DeadLock::getPackageInfo)
+        // Is Package Installed
+        .def("is_installed", &DeadLock::isPackageInstalled)
+        // Uninstall Packages
+        .def("uninstall_packages", &DeadLock::uninstallPackages);
 }
