@@ -7,9 +7,7 @@ name = "DeadLock"
 description = 'A Project Manager made for Data scientists'
 readme = "README.md"
 version = "1.0.0"
-authors = [
-    {name = "Chitransh Soral", email = "chitranshsoral13@gmail.com"}
-]
+authors = [{ name = "Chitransh Soral", email = "chitranshsoral13@gmail.com" }]
 requires-python = ">=3.11"
 
 [project.scripts]
@@ -17,6 +15,7 @@ dl = "deadlock.cli:main"
 
 [tool.setuptools]
 packages = ["deadlock"]
+include-package-data = true
 
 [tool.setuptools.package-dir]
 deadlock = "DeadLock"

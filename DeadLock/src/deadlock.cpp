@@ -1449,7 +1449,7 @@ bool DeadLock::writeDeadLockFile(string content, string filePath)
     file << content;
     file.close();
 
-    if (!file.good())
+    if (!file.good()) // File I/O operation completed successfully
     {
         std::cerr << "Failed to write to dead.lock file: " << filePath << std::endl;
         return false;
@@ -1472,7 +1472,8 @@ string DeadLock::readDeadLockFile(string filePath)
 
 vector<Package> DeadLock::getInstalledPackages()
 {
-    return loadedPackages;
+    // TODO: Write implementation
+    return {};
 }
 
 void DeadLock::userOption()
@@ -1617,5 +1618,6 @@ bool DeadLock::isPkgInDeadLock(string packageName)
  */
 bool DeadLock::uninstallPackages(vector<string> packages) {
     cout << "Uninstalling packages" << endl;
+    // TODO: Write Implementation
     return true;
 }
