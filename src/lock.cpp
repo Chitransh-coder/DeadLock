@@ -1,7 +1,7 @@
-#include "../include/deadlock.h"
+#include "./include/deadlock.h"
 #include <iostream>
 #include <vector>
-#include "../include/structs.h"
+#include "./include/structs.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

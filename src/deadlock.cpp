@@ -1,5 +1,5 @@
-#include "../include/deadlock.h"
-#include "../include/structs.h"
+#include "./include/deadlock.h"
+#include "./include/structs.h"
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
@@ -101,7 +101,7 @@ bool createDirectoryRecursive(const string &path)
  *
  * @param url The target URL to which the HTTP GET request will be send.
  *
- * @returns std::string The response body from the server, or an empty string if the request fails.
+ * @returns string The response body from the server, or an empty string if the request fails.
  */
 string DeadLock::apiCaller(string url)
 {
@@ -109,7 +109,7 @@ string DeadLock::apiCaller(string url)
     string response;
     if (!curl)
     {
-        std::cerr << "Error initializing cURL object" << std::endl;
+        cerr << "Error initializing cURL object" << endl;
         return NULL;
     }
     // Set request to GET
@@ -133,7 +133,7 @@ string DeadLock::apiCaller(string url)
     // Check response
     if (res != CURLE_OK)
     {
-        std::cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << std::endl;
+        cerr << "Failed to query PyPI: " << curl_easy_strerror(res) << endl;
         return NULL;
     }
     return response;
@@ -152,7 +152,7 @@ void DeadLock::init(string projectName)
     vector<string> packages(10);
     if (!isPythonAvailable())
     {
-        std::cerr << "Python not available! Please download latest version from https://www.python.org/" << std::endl;
+        cerr << "Python not available! Please download latest version from https://www.python.org/" << endl;
         exit(1);
     }
 // Check User OS
@@ -169,7 +169,7 @@ void DeadLock::init(string projectName)
     pyFileGenerate(projectName);
     gitignoreGenerate(projectName);
     readmeGenerate(projectName);
-    std::cout << "Project " << projectName << " created successfully!" << std::endl;
+    cout << "Project " << projectName << " created successfully!" << endl;
 }
 
 /**
@@ -194,7 +194,7 @@ void DeadLock::notebookGenerate(string projectName)
     }
     catch (exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
     }
 }
 
@@ -214,7 +214,7 @@ void DeadLock::pyFileGenerate(string projectName)
     }
     catch (exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
     }
 }
 
@@ -267,7 +267,7 @@ void DeadLock::gitignoreGenerate(string projectName)
     }
     catch (exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
     }
 }
 
@@ -288,7 +288,7 @@ void DeadLock::readmeGenerate(string projectName)
     }
     catch (exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
     }
 }
 
@@ -430,14 +430,14 @@ bool DeadLock::downloadPackage(string packageName, string version)
         FILE *fp = fopen(outputPath.c_str(), "wb");
         if (!fp)
         {
-            std::cerr << "Failed to create output file: " << outputPath << std::endl;
+            cerr << "Failed to create output file: " << outputPath << endl;
             return false;
         }
 
         CURL *downloadCurl = curl_easy_init();
         if (!downloadCurl)
         {
-            std::cerr << "Failed to initialize curl for download" << std::endl;
+            cerr << "Failed to initialize curl for download" << endl;
             fclose(fp);
             return false;
         }
@@ -448,7 +448,7 @@ bool DeadLock::downloadPackage(string packageName, string version)
         curl_easy_setopt(downloadCurl, CURLOPT_USERAGENT, "DeadLock/1.0");
         curl_easy_setopt(downloadCurl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(downloadCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-        std::cout << "Downloading package " << wheelFileName << std::endl;
+        cout << "Downloading package " << wheelFileName << endl;
         CURLcode downloadRes = curl_easy_perform(downloadCurl);
         long httpCode = 0;
         curl_easy_getinfo(downloadCurl, CURLINFO_RESPONSE_CODE, &httpCode);
@@ -457,19 +457,19 @@ bool DeadLock::downloadPackage(string packageName, string version)
 
         if (downloadRes != CURLE_OK || httpCode != 200)
         {
-            std::cerr << "Failed to download wheel: " << curl_easy_strerror(downloadRes) << ", HTTP code: " << httpCode << std::endl;
+            cerr << "Failed to download wheel: " << curl_easy_strerror(downloadRes) << ", HTTP code: " << httpCode << endl;
             return false;
         }
         return true;
     }
     catch (json::exception &e)
     {
-        std::cerr << "Failed to parse json response from the server." << std::endl;
+        cerr << "Failed to parse json response from the server." << endl;
         return false;
     }
     catch (exception &e)
     {
-        std::cerr << "Failed to download package " << packageName << std::endl;
+        cerr << "Failed to download package " << packageName << endl;
         return false;
     }
 }
@@ -485,21 +485,21 @@ bool DeadLock::installPackage(string package)
     ifstream fileExists(getDeadLockFilePath());
     if (fileExists)
     {
-        std::cout << "dead.lock file found, updating file" << std::endl;
+        cout << "dead.lock file found, updating file" << endl;
     }
     else
     {
-        std::cout << "dead.lock file not found, generating a new one" << std::endl;
+        cout << "dead.lock file not found, generating a new one" << endl;
         bool succ = generateDeadLockFile(getDeadLockFilePath());
         if (!succ)
         {
-            std::cout << "Error generating new dead.lock file" << std::endl;
+            cout << "Error generating new dead.lock file" << endl;
         }
     }
     fileExists.close();
     if (isPackageInstalled(package))
     {
-        std::cout << "Package already installed" << std::endl;
+        cout << "Package already installed" << endl;
         return true;
     }
     string deadLockStr = readDeadLockFile(getDeadLockFilePath());
@@ -511,7 +511,7 @@ bool DeadLock::installPackage(string package)
             Package pkg = getPackageInfo(package);
             if (pkg.empty())
             {
-                std::cerr << "Error finding information about " << package << std::endl;
+                cerr << "Error finding information about " << package << endl;
             }
             pkg.installDate = getCurrentTimestamp();
             updateDeadLockFile(pkg);
@@ -522,7 +522,7 @@ bool DeadLock::installPackage(string package)
     }
     catch (json::exception &e)
     {
-        std::cerr << "Error parsing JSON" << e.what() << std::endl;
+        cerr << "Error parsing JSON" << e.what() << endl;
     }
     return true;
 }
@@ -531,7 +531,7 @@ bool DeadLock::installPackages(vector<string> packages)
 {
     if (packages.empty())
     {
-        std::cerr << "No packages specified for installation." << std::endl;
+        cerr << "No packages specified for installation." << endl;
         return false;
     }
 
@@ -551,7 +551,7 @@ bool DeadLock::installPackages(vector<string> packages)
         string currentPackage = installedPackages.front();
         installedPackages.erase(installedPackages.begin());
 
-        std::cout << "Processing package: " << currentPackage << std::endl;
+        cout << "Processing package: " << currentPackage << endl;
 
         // Check if this package is a dependency (already being handled)
         bool isDependency = dependencyPackages.find(currentPackage) != dependencyPackages.end();
@@ -562,7 +562,7 @@ bool DeadLock::installPackages(vector<string> packages)
             string version = getLatestVersion(currentPackage);
             if (version.empty())
             {
-                std::cerr << "Could not get version for package: " << currentPackage << std::endl;
+                cerr << "Could not get version for package: " << currentPackage << endl;
                 return false;
             }
 
@@ -571,13 +571,13 @@ bool DeadLock::installPackages(vector<string> packages)
 
             if (!dependencies.empty())
             {
-                std::cout << "Found " << dependencies.size() << " dependencies for " << currentPackage << ":" << std::endl;
+                cout << "Found " << dependencies.size() << " dependencies for " << currentPackage << ":" << endl;
 
                 // Add dependencies to the front of the installedPackages array
                 // and mark them as dependency packages
                 for (auto &dep : dependencies)
                 {
-                    std::cout << "  - " << dep << std::endl;
+                    cout << "  - " << dep << endl;
                     installedPackages.insert(installedPackages.begin(), dep);
                     dependencyPackages.insert(dep);
                 }
@@ -588,17 +588,17 @@ bool DeadLock::installPackages(vector<string> packages)
         string version = getLatestVersion(currentPackage);
         if (version.empty())
         {
-            std::cerr << "Could not get version for package: " << currentPackage << std::endl;
+            cerr << "Could not get version for package: " << currentPackage << endl;
             return false;
         }
 
         if (!installPackage(currentPackage))
         {
-            std::cerr << "Package not installed: " << currentPackage << std::endl;
+            cerr << "Package not installed: " << currentPackage << endl;
             return false;
         }
 
-        std::cout << "Successfully installed " << currentPackage << std::endl;
+        cout << "Successfully installed " << currentPackage << endl;
     }
 
     return true;
@@ -629,12 +629,12 @@ Package DeadLock::getPackageInfo(string packageName)
     }
     catch (json::exception &e)
     {
-        std::cerr << "Failed to parse API response " << std::endl;
+        cerr << "Failed to parse API response " << endl;
         return pkg;
     }
     catch (exception &e)
     {
-        std::cerr << "Error retrieving information for package" << packageName << std::endl;
+        cerr << "Error retrieving information for package" << packageName << endl;
         return pkg;
     }
     return pkg;
@@ -657,7 +657,7 @@ string DeadLock::getLatestVersion(string packageName)
     {
         return "";
     }
-    try
+    trx
     {
         json j = json::parse(info);
         if (j.contains("info"))
@@ -682,11 +682,11 @@ string DeadLock::getLatestVersion(string packageName)
     }
     catch (json::exception &e)
     {
-        std::cerr << "error parsing json: " << e.what() << std::endl;
+        cerr << "error parsing json: " << e.what() << endl;
     }
     catch (exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
     }
     return "";
 }
@@ -708,18 +708,18 @@ bool DeadLock::createVirtualEnvironment(string venvPath)
     sitePackagesPath = venvPath + "\\Lib\\site-packages";
     if (_access(sitePackagesPath.c_str(), 0) == 0)
     {
-        std::cout << "Virtual environment already exists at: " << venvPath << std::endl;
+        cout << "Virtual environment already exists at: " << venvPath << endl;
         return true;
     }
 
     // Create virtual environment using Python
     string command = "python -m venv " + venvPath;
-    std::cout << "Creating virtual environment... " << std::endl;
+    cout << "Creating virtual environment... " << endl;
     int result = system(command.c_str());
 
     if (result != 0)
     {
-        std::cerr << "Failed to create virtual environment" << std::endl;
+        cerr << "Failed to create virtual environment" << endl;
         return false;
     }
 
@@ -729,17 +729,17 @@ bool DeadLock::createVirtualEnvironment(string venvPath)
     sitePackagesPath = venvPath + "/lib/python*/site-packages";
     if (access((venvPath + "/bin/python").c_str(), F_OK) == 0)
     {
-        std::cout << "Virtual environment already exists at: " << venvPath << std::endl;
+        cout << "Virtual environment already exists at: " << venvPath << endl;
         return true;
     }
 
     string command = "python3 -m venv " + venvPath;
-    std::cout << "Creating virtual environment: " << venvPath << std::endl;
+    cout << "Creating virtual environment: " << venvPath << endl;
     int result = system(command.c_str());
 
     if (result != 0)
     {
-        std::cerr << "Failed to create virtual environment" << std::endl;
+        cerr << "Failed to create virtual environment" << endl;
         return false;
     }
 
@@ -770,19 +770,19 @@ bool DeadLock::renameWheelToZip(string wheelPath, string zipPath)
         zipPath += ".zip";
     }
 
-    std::cout << "Renaming wheel file to zip: " << wheelPath << " -> " << zipPath << std::endl;
+    cout << "Renaming wheel file to zip: " << wheelPath << " -> " << zipPath << endl;
 
     // Rename the file
 #ifdef _WIN32
     if (MoveFileA(wheelPath.c_str(), zipPath.c_str()) == 0)
     {
-        std::cerr << "Failed to rename wheel file to zip" << std::endl;
+        cerr << "Failed to rename wheel file to zip" << endl;
         return false;
     }
 #else
     if (rename(wheelPath.c_str(), zipPath.c_str()) != 0)
     {
-        std::cerr << "Failed to rename wheel file to zip" << std::endl;
+        cerr << "Failed to rename wheel file to zip" << endl;
         return false;
     }
 #endif
@@ -805,7 +805,7 @@ bool DeadLock::extractZipFile(string zipPath, string extractPath)
     FILE *file = fopen(zipPath.c_str(), "rb");
     if (!file)
     {
-        std::cerr << "Failed to open zip file: " << zipPath << std::endl;
+        cerr << "Failed to open zip file: " << zipPath << endl;
         return false;
     }
 
@@ -816,7 +816,7 @@ bool DeadLock::extractZipFile(string zipPath, string extractPath)
 
     if (fileSize <= 0)
     {
-        std::cerr << "Invalid file size" << std::endl;
+        cerr << "Invalid file size" << endl;
         fclose(file);
         return false;
     }
@@ -828,7 +828,7 @@ bool DeadLock::extractZipFile(string zipPath, string extractPath)
 
     if (bytesRead != static_cast<size_t>(fileSize))
     {
-        std::cerr << "Failed to read zip file completely" << std::endl;
+        cerr << "Failed to read zip file completely" << endl;
         return false;
     }
 
@@ -841,25 +841,25 @@ bool DeadLock::extractZipFile(string zipPath, string extractPath)
 
     if (zipData.size() < 22)
     {
-        std::cerr << "File too small to be a valid ZIP" << std::endl;
+        cerr << "File too small to be a valid ZIP" << endl;
         return false;
     }
 
     // Check for ZIP file signature (PK)
     if (zipData[0] != 'P' || zipData[1] != 'K')
     {
-        std::cerr << "Not a valid ZIP file" << std::endl;
+        cerr << "Not a valid ZIP file" << endl;
         return false;
     }
 
     // Parse ZIP file using zlib
     if (!parseAndExtractZip(zipData, extractPath))
     {
-        std::cerr << "Failed to extract ZIP file using zlib" << std::endl;
+        cerr << "Failed to extract ZIP file using zlib" << endl;
         return false;
     }
 
-    std::cout << "ZIP extraction completed successfully using zlib" << std::endl;
+    cout << "ZIP extraction completed successfully using zlib" << endl;
     return true;
 }
 
@@ -899,7 +899,7 @@ bool DeadLock::extractWheelToVenv(string wheelPath, string venvPath)
     int result = system(copyCommand.c_str());
     if (result != 0)
     {
-        std::cerr << "Failed to copy package contents to site-packages" << std::endl;
+        cerr << "Failed to copy package contents to site-packages" << endl;
         return false;
     }
     system(("rmdir /S /Q \"" + tempExtractPath + "\"").c_str());
@@ -932,13 +932,13 @@ bool DeadLock::extractWheelToVenv(string wheelPath, string venvPath)
     int result = system(copyCommand.c_str());
     if (result != 0)
     {
-        std::cerr << "Failed to copy package contents to site-packages" << std::endl;
+        cerr << "Failed to copy package contents to site-packages" << endl;
         return false;
     }
     system(("rm -rf \"" + tempExtractPath + "\"").c_str());
     unlink(zipPath.c_str());
 #endif
-    std::cout << "Package successfully extracted to virtual environment!" << std::endl;
+    cout << "Package successfully extracted to virtual environment!" << endl;
     return true;
 }
 
@@ -955,7 +955,7 @@ bool DeadLock::extractWheelToVenv(string wheelPath, string venvPath)
  */
 bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractPath)
 {
-    std::cout << "Parsing ZIP file with zlib decompression..." << std::endl;
+    cout << "Parsing ZIP file with zlib decompression..." << endl;
 
     // Find End of Central Directory Record (EOCD)
     size_t zipSize = zipData.size();
@@ -975,7 +975,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
 
     if (!foundEOCD)
     {
-        std::cerr << "Could not find End of Central Directory record" << std::endl;
+        cerr << "Could not find End of Central Directory record" << endl;
         return false;
     }
 
@@ -984,11 +984,11 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
     uint32_t centralDirSize = readUint32(zipData.data(), eocdOffset + 12);
     uint32_t centralDirOffset = readUint32(zipData.data(), eocdOffset + 16);
 
-    std::cout << "Found " << numEntries << " entries in ZIP file" << std::endl;
+    cout << "Found " << numEntries << " entries in ZIP file" << endl;
 
     if (centralDirOffset + centralDirSize > zipSize)
     {
-        std::cerr << "Invalid central directory offset or size" << std::endl;
+        cerr << "Invalid central directory offset or size" << endl;
         return false;
     }
 
@@ -998,14 +998,14 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
     {
         if (currentOffset + 46 > zipSize)
         {
-            std::cerr << "Invalid central directory entry offset" << std::endl;
+            cerr << "Invalid central directory entry offset" << endl;
             return false;
         }
 
         // Check central directory header signature
         if (readUint32(zipData.data(), currentOffset) != 0x02014b50)
         {
-            std::cerr << "Invalid central directory header signature" << std::endl;
+            cerr << "Invalid central directory header signature" << endl;
             return false;
         }
 
@@ -1021,7 +1021,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
         // Extract filename
         if (currentOffset + 46 + filenameLength > zipSize)
         {
-            std::cerr << "Invalid filename length" << std::endl;
+            cerr << "Invalid filename length" << endl;
             return false;
         }
 
@@ -1035,14 +1035,14 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
         // Find local header
         if (localHeaderOffset + 30 > zipSize)
         {
-            std::cerr << "Invalid local header offset" << std::endl;
+            cerr << "Invalid local header offset" << endl;
             return false;
         }
 
         // Check local header signature
         if (readUint32(zipData.data(), localHeaderOffset) != 0x04034b50)
         {
-            std::cerr << "Invalid local header signature" << std::endl;
+            cerr << "Invalid local header signature" << endl;
             return false;
         }
 
@@ -1055,7 +1055,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
 
         if (dataOffset + compressedSize > zipSize)
         {
-            std::cerr << "Invalid data offset or compressed size" << std::endl;
+            cerr << "Invalid data offset or compressed size" << endl;
             return false;
         }
 
@@ -1063,7 +1063,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
         string fullPath = extractPath + "/" + filename;
         if (!createDirectoryRecursive(fullPath))
         {
-            std::cerr << "Failed to create directory for: " << fullPath << std::endl;
+            cerr << "Failed to create directory for: " << fullPath << endl;
             return false;
         }
         // Extract and decompress file data
@@ -1074,7 +1074,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
             // No compression (stored)
             if (compressedSize != uncompressedSize)
             {
-                std::cerr << "Size mismatch for stored file: " << filename << std::endl;
+                cerr << "Size mismatch for stored file: " << filename << endl;
                 return false;
             }
             if (compressedSize > 0)
@@ -1098,7 +1098,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
                 int ret = inflateInit2(&strm, -MAX_WBITS);
                 if (ret != Z_OK)
                 {
-                    std::cerr << "Failed to initialize zlib inflation for file: " << filename << std::endl;
+                    cerr << "Failed to initialize zlib inflation for file: " << filename << endl;
                     return false;
                 }
 
@@ -1107,14 +1107,14 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
 
                 if (ret != Z_STREAM_END || strm.total_out != uncompressedSize)
                 {
-                    std::cerr << "Failed to decompress file: " << filename << " (error: " << ret << ")" << std::endl;
+                    cerr << "Failed to decompress file: " << filename << " (error: " << ret << ")" << endl;
                     return false;
                 }
             }
         }
         else
         {
-            std::cerr << "Unsupported compression method: " << compressionMethod << " for file: " << filename << std::endl;
+            cerr << "Unsupported compression method: " << compressionMethod << " for file: " << filename << endl;
             return false;
         }
 
@@ -1122,7 +1122,7 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
         ofstream outFile(fullPath, ios::binary);
         if (!outFile)
         {
-            std::cerr << "Failed to create output file: " << fullPath << std::endl;
+            cerr << "Failed to create output file: " << fullPath << endl;
             return false;
         }
 
@@ -1131,14 +1131,14 @@ bool DeadLock::parseAndExtractZip(vector<unsigned char> zipData, string extractP
 
         if (!outFile.good())
         {
-            std::cerr << "Failed to write file: " << fullPath << std::endl;
+            cerr << "Failed to write file: " << fullPath << endl;
             return false;
         }
 
         // Move to next central directory entry
         currentOffset += 46 + filenameLength + extraFieldLength + commentLength;
     }
-    std::cout << "All entries processed successfully" << std::endl;
+    cout << "All entries processed successfully" << endl;
     return true;
 }
 
@@ -1169,7 +1169,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
     json deadJSON;
     if (deadData.empty())
     {
-        std::cerr << "Error reading dead.lock file" << std::endl;
+        cerr << "Error reading dead.lock file" << endl;
         return false;
     }
     try
@@ -1178,7 +1178,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
     }
     catch (json::exception &e)
     {
-        std::cerr << "Error reading JSON in dead.lock:" << e.what() << "\n"
+        cerr << "Error reading JSON in dead.lock:" << e.what() << "\n"
                   << "Regenerate? y/n: ";
         string opt;
         cin >> opt;
@@ -1186,7 +1186,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
         {
             if (!generateDeadLockFile())
             {
-                std::cerr << "Error generating dead.lock file" << std::endl;
+                cerr << "Error generating dead.lock file" << endl;
                 return false;
             }
             deadJSON = json::parse(readDeadLockFile(getDeadLockFilePath()));
@@ -1219,7 +1219,7 @@ bool DeadLock::removeFromDeadLockFile(string packageName)
 
     if (it == loadedPackages.end())
     {
-        std::cerr << "Package " << packageName << " not found in dead.lock file" << std::endl;
+        cerr << "Package " << packageName << " not found in dead.lock file" << endl;
         return false;
     }
 
@@ -1233,7 +1233,7 @@ bool DeadLock::removeFromDeadLockFile(string packageName)
 
     if (success)
     {
-        std::cout << "Removed package " << packageName << " from dead.lock file" << std::endl;
+        cout << "Removed package " << packageName << " from dead.lock file" << endl;
     }
 
     return success;
@@ -1244,7 +1244,7 @@ bool DeadLock::isPackageInstalled(string packageName)
     string deadlockFileContent = readDeadLockFile(getDeadLockFilePath());
     if (deadlockFileContent.empty())
     {
-        std::cerr << "Error reading dead.lock file" << std::endl;
+        cerr << "Error reading dead.lock file" << endl;
         return false;
     }
     try
@@ -1262,18 +1262,18 @@ bool DeadLock::isPackageInstalled(string packageName)
         }
         else
         {
-            std::cout << "No packages installed in dead.lock file." << std::endl;
+            cout << "No packages installed in dead.lock file." << endl;
             return false;
         }
     }
     catch (json::exception &e)
     {
-        std::cerr << "Error reading json object: " << e.what() << std::endl;
+        cerr << "Error reading json object: " << e.what() << endl;
         return false;
     }
-    catch (std::exception &e)
+    catch (exception &e)
     {
-        std::cerr << "Error finding " << packageName << "in dead.lock file: " << e.what() << std::endl;
+        cerr << "Error finding " << packageName << "in dead.lock file: " << e.what() << endl;
         return false;
     }
     return false;
@@ -1284,10 +1284,10 @@ bool DeadLock::syncFromDeadLock(string projectPath)
     ifstream fileExists(getDeadLockFilePath());
     if (!fileExists)
     {
-        std::cerr << "No dead.lock file found." << std::endl;
+        cerr << "No dead.lock file found." << endl;
         return false;
     }
-    std::cout << "Syncing packages from dead.lock file..." << std::endl;
+    cout << "Syncing packages from dead.lock file..." << endl;
 
     // Extract package names from loadedPackages for installation
     vector<string> packageNames;
@@ -1298,14 +1298,14 @@ bool DeadLock::syncFromDeadLock(string projectPath)
 
     if (packageNames.empty())
     {
-        std::cout << "No packages found in dead.lock file to sync." << std::endl;
+        cout << "No packages found in dead.lock file to sync." << endl;
         return true;
     }
 
     // Create virtual environment if it doesn't exist
     if (!createVirtualEnvironment(".venv"))
     {
-        cerr << "Error creating virtual environment" << std::endl;
+        cerr << "Error creating virtual environment" << endl;
     }
 
     // Install all packages using the existing logic
@@ -1362,7 +1362,7 @@ vector<string> DeadLock::getPackageDependencies(string packageName)
                 {
                     if (!req.is_null())
                     {
-                        std::string depString = req.get<std::string>();
+                        string depString = req.get<string>();
                         // Check if dependency is optional
                         if (depString.find("extra") != string::npos)
                         {
@@ -1375,19 +1375,19 @@ vector<string> DeadLock::getPackageDependencies(string packageName)
                         size_t gtPos = depString.find('>');
                         size_t ltPos = depString.find('<');
                         size_t eqPos = depString.find('=');
-                        size_t endPos = (spacePos != std::string::npos ? spacePos : depString.length());
-                        if (parenPos != std::string::npos && parenPos < endPos)
+                        size_t endPos = (spacePos != string::npos ? spacePos : depString.length());
+                        if (parenPos != string::npos && parenPos < endPos)
                             endPos = parenPos;
-                        if (semicolonPos != std::string::npos && semicolonPos < endPos)
+                        if (semicolonPos != string::npos && semicolonPos < endPos)
                             endPos = semicolonPos;
-                        if (gtPos != std::string::npos && gtPos < endPos)
+                        if (gtPos != string::npos && gtPos < endPos)
                             endPos = gtPos;
-                        if (ltPos != std::string::npos && ltPos < endPos)
+                        if (ltPos != string::npos && ltPos < endPos)
                             endPos = ltPos;
-                        if (eqPos != std::string::npos && eqPos < endPos)
+                        if (eqPos != string::npos && eqPos < endPos)
                             endPos = eqPos;
-                        std::string depName = depString.substr(0, endPos);
-                        if (!depName.empty() && std::find(dependencies.begin(), dependencies.end(), depName) == dependencies.end())
+                        string depName = depString.substr(0, endPos);
+                        if (!depName.empty() && find(dependencies.begin(), dependencies.end(), depName) == dependencies.end())
                         { // if package is not already in array, then push
                             dependencies.push_back(depName);
                         }
@@ -1396,12 +1396,12 @@ vector<string> DeadLock::getPackageDependencies(string packageName)
             }
             else
             {
-                std::cerr << "Error finding package version" << std::endl;
+                cerr << "Error finding package version" << endl;
             }
         }
         catch (json::exception &e)
         {
-            std::cerr << "Error parsing dependencies for " << packageName << ": " << e.what() << std::endl;
+            cerr << "Error parsing dependencies for " << packageName << ": " << e.what() << endl;
         }
     }
     return dependencies;
@@ -1442,7 +1442,7 @@ bool DeadLock::writeDeadLockFile(string content, string filePath)
     ofstream file(filePath);
     if (!file)
     {
-        std::cerr << "Failed to open dead.lock file for writing: " << filePath << std::endl;
+        cerr << "Failed to open dead.lock file for writing: " << filePath << endl;
         return false;
     }
 
@@ -1451,7 +1451,7 @@ bool DeadLock::writeDeadLockFile(string content, string filePath)
 
     if (!file.good()) // File I/O operation completed successfully
     {
-        std::cerr << "Failed to write to dead.lock file: " << filePath << std::endl;
+        cerr << "Failed to write to dead.lock file: " << filePath << endl;
         return false;
     }
 
@@ -1480,12 +1480,12 @@ void DeadLock::userOption()
 {
     vector<string> packages;
     int type, option;
-    std::cout << "What type of project do you want?\n1) Basic\n"
+    cout << "What type of project do you want?\n1) Basic\n"
                  "2) Computer Vision\n"
                  "3) NLP\n"
                  "4) Empty"
-              << std::endl;
-    std::cin >> type;
+              << endl;
+    cin >> type;
     switch (type)
     {
     case 1:
@@ -1497,14 +1497,14 @@ void DeadLock::userOption()
                     "scipy"};
         if (!installPackages(packages))
         {
-            std::cout << "Error installing Packages" << std::endl;
+            cout << "Error installing Packages" << endl;
             exit(-1);
         }
         break;
     case 2:
-        std::cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-                  << std::endl;
-        std::cin >> option;
+        cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
+                  << endl;
+        cin >> option;
         switch (option)
         {
         case 1:
@@ -1533,21 +1533,21 @@ void DeadLock::userOption()
             break;
 
         default:
-            std::cout << "Invalid option chosen, ending operations" << std::endl;
+            cout << "Invalid option chosen, ending operations" << endl;
             _rmdir(gProjectName.c_str());
             exit(-1);
             break;
         }
         if (!installPackages(packages))
         {
-            std::cout << "Error installing Packages" << std::endl;
+            cout << "Error installing Packages" << endl;
             exit(-1);
         }
         break;
     case 3:
-        std::cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-                  << std::endl;
-        std::cin >> option;
+        cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
+                  << endl;
+        cin >> option;
         switch (option)
         {
         case 1:
@@ -1579,21 +1579,21 @@ void DeadLock::userOption()
             break;
 
         default:
-            std::cout << "Invalid option chosen, ending operations" << std::endl;
+            cout << "Invalid option chosen, ending operations" << endl;
             _rmdir(gProjectName.c_str());
             exit(-1);
             break;
         }
         if (!installPackages(packages))
         {
-            std::cout << "Error installing Packages" << std::endl;
+            cout << "Error installing Packages" << endl;
             exit(-1);
         }
         break;
     case 4:
         break;
     default:
-        std::cout << "Invalid option chosen, ending operations" << std::endl;
+        cout << "Invalid option chosen, ending operations" << endl;
         _rmdir(gProjectName.c_str());
         exit(-1);
         break;

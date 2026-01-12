@@ -1,15 +1,15 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.26)
 project(DeadLock VERSION 1.0.0)
 
 # Define source and include directories
-set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/include)
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/src)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOURCES
     ${SRC_DIR}/deadlock.cpp
     ${SRC_DIR}/lock.cpp
 )
 
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
