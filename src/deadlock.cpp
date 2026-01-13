@@ -1,5 +1,5 @@
-#include "./include/deadlock.h"
-#include "./include/structs.h"
+#include "../include/deadlock.h"
+#include "../include/structs.h"
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
@@ -657,7 +657,7 @@ string DeadLock::getLatestVersion(string packageName)
     {
         return "";
     }
-    trx
+    try
     {
         json j = json::parse(info);
         if (j.contains("info"))
@@ -1179,7 +1179,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
     catch (json::exception &e)
     {
         cerr << "Error reading JSON in dead.lock:" << e.what() << "\n"
-                  << "Regenerate? y/n: ";
+             << "Regenerate? y/n: ";
         string opt;
         cin >> opt;
         if (opt == "y")
@@ -1481,10 +1481,10 @@ void DeadLock::userOption()
     vector<string> packages;
     int type, option;
     cout << "What type of project do you want?\n1) Basic\n"
-                 "2) Computer Vision\n"
-                 "3) NLP\n"
-                 "4) Empty"
-              << endl;
+            "2) Computer Vision\n"
+            "3) NLP\n"
+            "4) Empty"
+         << endl;
     cin >> type;
     switch (type)
     {
@@ -1503,7 +1503,7 @@ void DeadLock::userOption()
         break;
     case 2:
         cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-                  << endl;
+             << endl;
         cin >> option;
         switch (option)
         {
@@ -1546,7 +1546,7 @@ void DeadLock::userOption()
         break;
     case 3:
         cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-                  << endl;
+             << endl;
         cin >> option;
         switch (option)
         {
@@ -1616,7 +1616,8 @@ bool DeadLock::isPkgInDeadLock(string packageName)
  *
  * @returns `True` if package is removed.
  */
-bool DeadLock::uninstallPackages(vector<string> packages) {
+bool DeadLock::uninstallPackages(vector<string> packages)
+{
     cout << "Uninstalling packages" << endl;
     // TODO: Write Implementation
     return true;

@@ -1,7 +1,0 @@
-include CMakeLists.txt
-include vcpkg.json
-include CMakePresets.json
-include LICENSE
-include README.md
-recursive-include DeadLock/include *.h
-recursive-include DeadLock/src *.cpp

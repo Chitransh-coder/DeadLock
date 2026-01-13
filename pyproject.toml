@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.10","pybind11>=2.10.0"]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.10.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -15,6 +15,12 @@ dl = "deadlock.cli:main"
 
 [tool.scikit-build]
 build.verbose = true
+cmake.version = ">=3.26"
+wheel.cmake = true
+minimum-version = "0.11"
+build-dir = "./build"
+install.components = ["curl", "zlib"]
+
 logging.level = "INFO"
 
 [tool.scikit-build.cmake.define]

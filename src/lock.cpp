@@ -1,14 +1,15 @@
-#include "./include/deadlock.h"
+#include "../include/deadlock.h"
 #include <iostream>
 #include <vector>
-#include "./include/structs.h"
+#include "../include/structs.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace std;
 
-PYBIND11_MODULE(_deadlock, d) {
+PYBIND11_MODULE(_deadlock, d)
+{
     d.doc() = "DeadLock - A Project Manager for Data Scientists";
 
     py::class_<DeadLock>(d, "DeadLock")
