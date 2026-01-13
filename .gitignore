@@ -19,7 +19,3 @@ dist/
 # Ignore Python virtual environments
 venv/
 *env
-# Ignore vcpkg installations
-vcpkg
-*vcpkg
-vcpkg*

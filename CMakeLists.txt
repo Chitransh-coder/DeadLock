@@ -9,6 +9,17 @@ set(SOURCES
     ${SRC_DIR}/lock.cpp
 )
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg.exe")
+        message(STATUS "Bootstrapping vcpkg...")
+        execute_process(
+            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg"
+        )
+    endif()
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+endif()
+
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(CURL REQUIRED)
