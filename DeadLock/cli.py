@@ -1,6 +1,6 @@
 import sys
 import argparse
-from deadlock import DeadLock
+from deadlock import _deadlock
 
 def main():
     parser = argparse.ArgumentParser(description='DeadLock Package Manager')
@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        dl = DeadLock()
+        dl = _deadlock()
 
         if args.command == 'create':
             print(f"Creating project {args.projectName}...")

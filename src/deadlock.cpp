@@ -1,5 +1,5 @@
-#include "../include/deadlock.h"
-#include "../include/structs.h"
+#include "../include/deadlock.hpp"
+#include "../include/structs.hpp"
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
@@ -22,7 +22,9 @@
 #include <dirent.h>
 #endif
 using json = nlohmann::json;
+using namespace std;  // Local to this file only
 
+// Static member initialization
 string DeadLock::gProjectName = ".";
 
 // Function to write data to a file and save it to disk

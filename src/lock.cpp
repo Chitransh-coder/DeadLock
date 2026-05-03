@@ -1,18 +1,23 @@
-#include "../include/deadlock.h"
+#include "../include/deadlock.hpp"
 #include <iostream>
 #include <vector>
-#include "../include/structs.h"
+#include "../include/structs.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace std;
 
+// Resolved error in initializing pybind11
+#ifndef PyEval_ThreadsInitialized()
+#define PyEval_InitThreads()
+#endif
+
 PYBIND11_MODULE(_deadlock, d)
 {
     d.doc() = "DeadLock - A Project Manager for Data Scientists";
 
-    py::class_<DeadLock>(d, "DeadLock")
+    py::class_<DeadLock>(d, "deadlock")
         .def(py::init<>())
         // Create Project
         .def("create_project", &DeadLock::init)

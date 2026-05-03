@@ -41,15 +41,17 @@ if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
-pybind11_add_module(${PROJECT_NAME} ${SOURCES})
+pybind11_add_module(_deadlock ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(_deadlock PRIVATE
     CURL::libcurl
     ZLIB::ZLIB
     nlohmann_json::nlohmann_json)
 
 # Add include directories
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(_deadlock PRIVATE
     ${INCLUDE_DIR}
     ${Python_INCLUDE_DIRS}
 )
+
+install(TARGETS _deadlock LIBRARY DESTINATION .)
