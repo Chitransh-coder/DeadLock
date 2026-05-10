@@ -1,6 +1,6 @@
 import sys
 import argparse
-from deadlock_core import DL_Extension
+from deadlock import DL_Extension
 
 def main():
     parser = argparse.ArgumentParser(description='DeadLock Package Manager')

@@ -19,7 +19,6 @@ cmake.version = ">=3.26"
 wheel.cmake = true
 minimum-version = "0.11"
 build-dir = "./build"
-
 logging.level = "INFO"
 
 [tool.scikit-build.cmake.define]
