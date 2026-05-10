@@ -13,11 +13,11 @@ using namespace std;
 #define PyEval_InitThreads()
 #endif
 
-PYBIND11_MODULE(_deadlock, d)
+PYBIND11_MODULE(deadlock_core, d)
 {
     d.doc() = "DeadLock - A Project Manager for Data Scientists";
 
-    py::class_<DeadLock>(d, "deadlock")
+    py::class_<DeadLock>(d, "DL_Wrapper")
         .def(py::init<>())
         // Create Project
         .def("create_project", &DeadLock::init)

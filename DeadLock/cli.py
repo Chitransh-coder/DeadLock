@@ -1,6 +1,6 @@
 import sys
 import argparse
-from deadlock import _deadlock
+from deadlock_core import DL_Extension
 
 def main():
     parser = argparse.ArgumentParser(description='DeadLock Package Manager')
@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        dl = _deadlock()
+        dl = DL_Extension()
 
         if args.command == 'create':
             print(f"Creating project {args.projectName}...")
@@ -37,7 +37,7 @@ def main():
                 sys.exit(1)
 
         elif args.command == 'sync':
-            success = dl.sync_from_deadlock()
+            success = dl.sync_fromdeadlock()
             if success:
                 print("Synced packages from dead.lock file")
             else:

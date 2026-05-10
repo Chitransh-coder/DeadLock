@@ -41,17 +41,30 @@ if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
-pybind11_add_module(_deadlock ${SOURCES})
+pybind11_add_module(deadlock_core ${SOURCES} WITH_SOABI)
 
-target_link_libraries(_deadlock PRIVATE
+target_link_libraries(deadlock_core PRIVATE
     CURL::libcurl
     ZLIB::ZLIB
     nlohmann_json::nlohmann_json)
 
 # Add include directories
-target_include_directories(_deadlock PRIVATE
+target_include_directories(deadlock_core PRIVATE
     ${INCLUDE_DIR}
     ${Python_INCLUDE_DIRS}
 )
 
-install(TARGETS _deadlock LIBRARY DESTINATION .)
+install(TARGETS deadlock_core
+    LIBRARY DESTINATION .
+)
+
+if(WIN32)
+    set(VCPKG_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/vcpkg_installed/x64-windows/bin")
+
+    if(EXISTS "${VCPKG_INSTALL_DIR}/libcurl.dll")
+        install(FILES "${VCPKG_INSTALL_DIR}/libcurl.dll" DESTINATION .)
+    endif()
+    if(EXISTS "${VCPKG_INSTALL_DIR}/zlib1.dll")
+        install(FILES "${VCPKG_INSTALL_DIR}/zlib1.dll" DESTINATION .)
+    endif()
+endif()
