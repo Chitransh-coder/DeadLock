@@ -45,7 +45,6 @@
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
   - [Building from Source](#building-from-source)
-</details>
 
 A smart way to manage your data science projects with pre-configured templates, dependency tracking and installation, etc.
 
@@ -76,6 +75,7 @@ deadlock create <project-name>
 ```
 
 This will:
+
 - Set up a virtual environment.
 - Generate project files (`.ipynb`, `.py`, `.gitignore`, `README.md`).
 - Create a `dead.lock` file for dependency tracking.
@@ -97,6 +97,7 @@ deadlock info <package-name>
 ```
 
 Example output:
+
 ```
 Package: tensorflow
 Latest version: 2.13.0
@@ -121,20 +122,22 @@ Shows all packages from the `dead.lock` file with versions and dependencies.
 
 ## Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `create <name>` | Create a new project | `deadlock create my-project` |
-| `install <packages...>` | Install Python packages | `deadlock install pandas numpy` |
-| `info <package>` | Get package information | `deadlock info tensorflow` |
-| `sync` | Install from dead.lock file | `deadlock sync` |
-| `list` | List installed packages | `deadlock list` |
+| Command                 | Description                 | Example                         |
+| ----------------------- | --------------------------- | ------------------------------- |
+| `create <name>`         | Create a new project        | `deadlock create my-project`    |
+| `install <packages...>` | Install Python packages     | `deadlock install pandas numpy` |
+| `info <package>`        | Get package information     | `deadlock info tensorflow`      |
+| `sync`                  | Install from dead.lock file | `deadlock sync`                 |
+| `list`                  | List installed packages     | `deadlock list`                 |
 
 ## Project Templates
 
 DeadLock has pre-configured templates from which you can kickstart your project, you can choose between the following options:
 
 ### 1. Basic Data Science
+
 Pre-installed packages for simple data analysis tasks:
+
 - pandas
 - numpy
 - scikit-learn
@@ -143,16 +146,21 @@ Pre-installed packages for simple data analysis tasks:
 - scipy
 
 ### 2. Computer Vision
+
 Choose between:
+
 - **TensorFlow**: Installs TensorFlow, OpenCV, etc. in the virtual environment.
 - **PyTorch**: Installs torch, torchvision, OpenCV, etc. in the isolated virtual environment.
 
 ### 3. Natural Language Processing
+
 Choose between:
+
 - **TensorFlow**: Installs TensorFlow in addition to tokenizer, nltk, embeddings, etc. in the virtual environment.
 - **PyTorch**: Installs torch in addition to tokenizer, nltk, embeddings, etc. in the virtual environment.
 
 ### 4. Empty Project
+
 No pre-installed packages, clean slate for custom setups.
 
 ## Dead.lock File
@@ -160,6 +168,7 @@ No pre-installed packages, clean slate for custom setups.
 The `dead.lock` file ensures reproducible builds by tracking exact package versions and dependencies.
 
 ### Structure
+
 ```json
 {
   "version": "1.0",
@@ -183,17 +192,20 @@ The `dead.lock` file ensures reproducible builds by tracking exact package versi
 ## Code Walkthrough
 
 #### `DeadLock`
+
 Main class for dependency management.
 
 **Key Methods:**
+
 - `init(string projectName)` - Initialize new project
-- `installPackages(vector<string> packages)` - Install multiple packages
+- `installPackages(vector<string> packages)` - Install multiple packages // Work in progress
 - `getLatestVersion(string packageName)` - Get latest version from PyPI
 - `getPackageDependencies(string packageName, string version)` - Get dependencies
-- `syncFromDeadLock(string projectPath)` - Sync from lock file
-- `loadDeadLockFile(string projectPath)` - Load existing lock file
+- `syncFromDeadLock(string projectPath)` - Sync from lock file // Work in progress
+- `loadDeadLockFile(string projectPath)` - Load existing lock file // Work in progress
 
 #### `Package`
+
 Structure representing a package.
 
 ```cpp
@@ -214,9 +226,11 @@ struct Package {
 Contributions are welcome. Please follow below guidelines if you have an idea or want a feature:
 
 ### Have an idea?
+
 Open a [GitHub issue](https://github.com/Chitransh-coder/DeadLock/issues)
 
 ### Want to Contribute with code?
+
 Open an issue and follow below steps:
 
 #### Contribution Guidelines
@@ -242,6 +256,7 @@ Open an issue and follow below steps:
 8. **Create a Pull Request**
 
 ### Code Style
+
 - Follow existing C++ coding conventions.
 - Variable and function names should follow smallCamelCase naming scheme.
 - Classes should follow UpperCamelCase naming scheme.
@@ -249,6 +264,7 @@ Open an issue and follow below steps:
 - Follow existing directory structure.
 
 ### Project Structure
+
 ```
 DeadLock/
 ├── src/                    # Source files
@@ -274,35 +290,39 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Building from Source
 
- - **Clone the repository**
-   ```bash
-   git clone https://github.com/Chitransh-coder/DeadLock.git
-   cd DeadLock
-   ```
+- **Clone the repository**
 
- - **Install system dependencies:**
+  ```bash
+  git clone https://github.com/Chitransh-coder/DeadLock.git
+  cd DeadLock
+  ```
 
-    **Linux (Ubuntu/Debian):**
-    ```bash
-    git clone https://github.com/Microsoft/vcpkg.git
-    ./vcpkg/bootstrap-vcpkg.sh
-    ./vcpkg/vcpkg install
-    ```
+- **Install system dependencies:**
 
-   **Windows:**
-   ```bash
-   # Install vcpkg first
-   git clone https://github.com/Microsoft/vcpkg.git
-   .\vcpkg\bootstrap-vcpkg.bat
-   .\vcpkg\vcpkg install
-   ```
+  **Linux (Ubuntu/Debian):**
 
->Note: You may need to set VCPKG_ROOT environment variable to the vcpkg installation path.
+  ```bash
+  git clone https://github.com/Microsoft/vcpkg.git
+  ./vcpkg/bootstrap-vcpkg.sh
+  ./vcpkg/vcpkg install
+  ```
 
- - **Build the project**
-   ```bash
-   cmake --preset debug && cmake --build build
-   ```
+  **Windows:**
+
+  ```bash
+  # Install vcpkg first
+  git clone https://github.com/Microsoft/vcpkg.git
+  .\vcpkg\bootstrap-vcpkg.bat
+  .\vcpkg\vcpkg install
+  ```
+
+> Note: You may need to set VCPKG_ROOT environment variable to the vcpkg installation path.
+
+- **Build the project**
+  ```bash
+  cmake --preset debug && cmake --build build
+  ```
+
 ---
 
 Made with ❤️ for the data science community.
