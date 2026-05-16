@@ -1136,6 +1136,13 @@ bool DeadLock::parseAndExtractZip(std::vector<unsigned char> zipData, std::strin
     return true;
 }
 
+/**
+ * @brief Generates the dead.lock file when the project initialises.
+ *
+ * @param projectPath Path to the project folder.
+ *
+ * @returns `True` If the file is generated successfully.
+ */
 bool DeadLock::generateDeadLockFile(std::string projectPath)
 {
     std::string lockFilePath = getDeadLockFilePath();
@@ -1157,6 +1164,13 @@ bool DeadLock::generateDeadLockFile(std::string projectPath)
     return writeDeadLockFile(lockData.dump(4), lockFilePath);
 }
 
+/**
+ * @brief Updates the dead.lock file with the record of current package.
+ *
+ * @param pkg THe package to be included in the file.
+ *
+ * @returns `True` If the operation is successful.
+ */
 bool DeadLock::updateDeadLockFile(Package pkg)
 {
     std::string deadData = readDeadLockFile(getDeadLockFilePath());
@@ -1202,6 +1216,13 @@ bool DeadLock::updateDeadLockFile(Package pkg)
     return writeDeadLockFile(deadJSON.dump(4), getDeadLockFilePath());
 }
 
+/**
+ * @brief Removes the current entry from dead.lock file.
+ *
+ * @param packageName Name of the package to be removed.
+ *
+ * @returns `True` If the operation is successful.
+ */
 bool DeadLock::removeFromDeadLockFile(std::string packageName)
 {
     // Find the package in loadedPackages std::vector
@@ -1273,6 +1294,13 @@ bool DeadLock::isPackageInstalled(std::string packageName)
     return false;
 }
 
+/**
+ * @brief Read the dead.lock file and install packages listed in it.
+ *
+ * @param projectPath Path of the main project.
+ *
+ * @returns `True` If installation is successful.
+ */
 bool DeadLock::syncFromDeadLock(std::string projectPath)
 {
     std::ifstream fileExists(getDeadLockFilePath());
@@ -1281,7 +1309,7 @@ bool DeadLock::syncFromDeadLock(std::string projectPath)
         std::cerr << "No dead.lock file found." << endl;
         return false;
     }
-    std::cout << "Synstd::cing packages from dead.lock file..." << endl;
+    std::cout << "Syncing packages from dead.lock file..." << endl;
 
     // Extract package names from loadedPackages for installation
     std::vector<std::string> packageNames;
@@ -1309,7 +1337,7 @@ bool DeadLock::syncFromDeadLock(std::string projectPath)
 /**
  * @brief Returns path of dead.lock file.
  *
- * @returns std:std::string The path of dead.lock file
+ * @returns std::string The path of dead.lock file
  */
 std::string DeadLock::getDeadLockFilePath()
 {
@@ -1330,7 +1358,7 @@ std::string DeadLock::getCurrentTimestamp()
 }
 
 /**
- * @brief Gets ***necessary*** packages of the provided package.
+ * @brief Gets \b necessary packages of the provided package.
  *
  * This function queries PYPI and retrieves info about all the required dependencies of the provided  package.
  *
@@ -1401,6 +1429,11 @@ std::vector<std::string> DeadLock::getPackageDependencies(std::string packageNam
     return dependencies;
 }
 
+/**
+ * @brief Generates the initial boilerplate for dead.lock file.
+ *
+ * @returns `std::string` Boilerplate content in string.
+ */
 std::string DeadLock::generateDeadLockJson()
 {
     json lockData = {
@@ -1431,6 +1464,14 @@ std::string DeadLock::generateDeadLockJson()
     return lockData.dump(4);
 }
 
+/**
+ * @brief Writes content to dead.lock file.
+ *
+ * @param `content` String containing the content to be written in the file.
+ * @param `filePath` String containing the path to dead.lock file.
+ *
+ * @returns `True` If the write operation succeded.
+ */
 bool DeadLock::writeDeadLockFile(std::string content, std::string filePath)
 {
     std::ofstream file(filePath);
@@ -1452,6 +1493,13 @@ bool DeadLock::writeDeadLockFile(std::string content, std::string filePath)
     return true;
 }
 
+/**
+ * @brief Reads the dead.lock file and returns the content as a string.
+ *
+ * @param `filePath` The path to dead.lock file.
+ *
+ * @returns `std::string` String containing the content of dead.lock file.
+ */
 std::string DeadLock::readDeadLockFile(std::string filePath)
 {
     std::ifstream file(filePath);
@@ -1464,12 +1512,24 @@ std::string DeadLock::readDeadLockFile(std::string filePath)
     return buffer.str();
 }
 
+/**
+ * @brief Returns the installed packages from dead.lock file as an array.
+ *
+ * Reads the dead.lock file and returns the installed packages
+ *
+ * @returns `std::vector<Package>` Array containing list of installed packages.
+ */
 std::vector<Package> DeadLock::getInstalledPackages()
 {
     // TODO: Write implementation
     return {};
 }
 
+/**
+ * @brief Function to capture the option selected by the user.
+ *
+ * Presents the pre-connfigured templates to the user and takes input of the user's choice.
+ */
 void DeadLock::userOption()
 {
     std::vector<std::string> packages;
@@ -1594,6 +1654,12 @@ void DeadLock::userOption()
     }
 }
 
+/**
+ * @brief Checks if the current package is already present in dead.lock or not.
+ *
+ * @param `packageName` The name of the current package.
+ * @returns `True` If package is found in dead.lock file.
+ */
 bool DeadLock::isPkgInDeadLock(std::string packageName)
 {
     std::string file = getDeadLockFilePath();
@@ -1605,7 +1671,6 @@ bool DeadLock::isPkgInDeadLock(std::string packageName)
 /**
  * @brief Uninstalls the specified packages from project and removes its reference in dead.lock
  *
- *
  * @param packages Array containing package(s) name to be removed
  *
  * @returns `True` if package is removed.
@@ -1615,4 +1680,45 @@ bool DeadLock::uninstallPackages(std::vector<std::string> packages)
     std::cout << "Uninstalling packages" << endl;
     // TODO: Write Implementation
     return true;
+}
+
+/**
+ * @brief Loads already installed packages from dead.lock file.
+ *
+ * It populates the internal array of loadedPackages.
+ */
+void DeadLock::loadPackages()
+{
+    try
+    {
+        json jsonData = json::parse(readDeadLockFile(getDeadLockFilePath()));
+        if (jsonData.contains("packages"))
+        {
+            for (const auto pkg : jsonData["packages"])
+            {
+                Package p = Package();
+                p.name = pkg["name"];
+                p.source = pkg["source"];
+                p.installDate = pkg["install_date"];
+                p.version = pkg["version"];
+                for (auto pi : pkg["dependencies"])
+                {
+                    p.dependencies.push_back(std::string(pi));
+                }
+                loadedPackages.push_back(p);
+            }
+        }
+        else
+        {
+            std::cout << "No packages found in dead.lock file." << endl;
+        }
+    }
+    catch (json::exception &e)
+    {
+        std::cerr << "Error reading json object: " << e.what() << endl;
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Error finding packages in dead.lock file: " << e.what() << endl;
+    }
 }

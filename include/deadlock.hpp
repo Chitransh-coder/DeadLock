@@ -71,6 +71,7 @@ private:
     bool parseAndExtractZip(std::vector<unsigned char> zipData, std::string extractPath);
 
     // Dead.lock file methods
+    void loadPackages();
     std::string generateDeadLockJson();
     bool isPkgInDeadLock(std::string packageName);
     bool writeDeadLockFile(std::string content, std::string filePath);
