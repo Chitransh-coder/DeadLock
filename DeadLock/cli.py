@@ -28,6 +28,7 @@ def main():
         if args.command == 'create':
             print(f"Creating project {args.projectName}...")
             dl.init(args.projectName)
+            
         elif args.command == 'install':
             success = dl.install_packages(args.packages)
             if success:

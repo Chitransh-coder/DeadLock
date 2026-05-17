@@ -45,6 +45,7 @@
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
   - [Building from Source](#building-from-source)
+</details>
 
 A smart way to manage your data science projects with pre-configured templates, dependency tracking and installation, etc.
 

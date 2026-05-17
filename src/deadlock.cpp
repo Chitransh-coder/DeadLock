@@ -484,21 +484,20 @@ bool DeadLock::downloadPackage(std::string packageName, std::string version)
  */
 bool DeadLock::installPackage(std::string package)
 {
-    std::ifstream fileExists(getDeadLockFilePath());
-    if (fileExists)
+    std::ifstream file(getDeadLockFilePath());
+    if (file)
     {
         std::cout << "dead.lock file found, updating file" << endl;
     }
     else
     {
         std::cout << "dead.lock file not found, generating a new one" << endl;
-        bool succ = generateDeadLockFile(getDeadLockFilePath());
-        if (!succ)
+        if (!generateDeadLockFile(getDeadLockFilePath()))
         {
             std::cout << "Error generating new dead.lock file" << endl;
         }
     }
-    fileExists.close();
+    file.close();
     if (isPackageInstalled(package))
     {
         std::cout << "Package already installed" << endl;
@@ -529,6 +528,13 @@ bool DeadLock::installPackage(std::string package)
     return true;
 }
 
+/**
+ * @brief Installs multiple packages as defined by the user.
+ *
+ * @param packages Array containing the names of packages.
+ *
+ * @returns `True` If all the packages and their dependencies are installed successfully.
+ */
 bool DeadLock::installPackages(std::vector<std::string> packages)
 {
     if (packages.empty())
@@ -1225,27 +1231,22 @@ bool DeadLock::updateDeadLockFile(Package pkg)
  */
 bool DeadLock::removeFromDeadLockFile(std::string packageName)
 {
-    // Find the package in loadedPackages std::vector
-    auto it = find_if(loadedPackages.begin(), loadedPackages.end(),
-                      [&packageName](Package &pkg)
-                      {
-                          return pkg.name == packageName;
-                      });
+    loadPackages();
+    auto it = find_if(loadedPackages.begin(), loadedPackages.end(), [&packageName](Package &pkg)
+    {
+        return pkg.name = packageName;
+    });
 
     if (it == loadedPackages.end())
     {
         std::cerr << "Package " << packageName << " not found in dead.lock file" << endl;
         return false;
     }
-
     loadedPackages.erase(it);
-
     // Write updated dead.lock file
     std::string lockFilePath = getDeadLockFilePath();
     std::string content = generateDeadLockJson();
-
     bool success = writeDeadLockFile(content, lockFilePath);
-
     if (success)
     {
         std::cout << "Removed package " << packageName << " from dead.lock file" << endl;
@@ -1254,6 +1255,15 @@ bool DeadLock::removeFromDeadLockFile(std::string packageName)
     return success;
 }
 
+/**
+ * @brief Checks if the package is installed in the project repository.
+ *
+ * @note The current implementation of this function is same as isPkgInDeadLock, but this function is supposed to check if the package is installed in the virtual python environment or not. I couldn't find a reliable way to consistently check packages in the virtual environment except by using pip. Therefore, contributions are welcome.
+ *
+ * @param packageName Name of the package.
+ *
+ * @returns `True` If the package is found installed.
+ */
 bool DeadLock::isPackageInstalled(std::string packageName)
 {
     std::string deadlockFileContent = readDeadLockFile(getDeadLockFilePath());
@@ -1269,7 +1279,7 @@ bool DeadLock::isPackageInstalled(std::string packageName)
         {
             for (const auto pkg : jsonData["packages"])
             {
-                if (packageName == pkg)
+                if (packageName == pkg["name"])
                 {
                     return true;
                 }
@@ -1344,6 +1354,11 @@ std::string DeadLock::getDeadLockFilePath()
     return "./dead.lock";
 }
 
+/**
+ * @brief Returns the time of execution.
+ *
+ * @returns `std::string` String containing the time of execution of script.
+ */
 std::string DeadLock::getCurrentTimestamp()
 {
     time_t now = time(0);
@@ -1515,14 +1530,14 @@ std::string DeadLock::readDeadLockFile(std::string filePath)
 /**
  * @brief Returns the installed packages from dead.lock file as an array.
  *
- * Reads the dead.lock file and returns the installed packages
+ * Reads the dead.lock file and returns the installed packages.
  *
  * @returns `std::vector<Package>` Array containing list of installed packages.
  */
 std::vector<Package> DeadLock::getInstalledPackages()
 {
-    // TODO: Write implementation
-    return {};
+    loadPackages();
+    return loadedPackages;
 }
 
 /**
@@ -1662,9 +1677,32 @@ void DeadLock::userOption()
  */
 bool DeadLock::isPkgInDeadLock(std::string packageName)
 {
-    std::string file = getDeadLockFilePath();
-    std::string data = readDeadLockFile(file);
-    // TODO: Write Implementation
+    try{
+        json data = json::parse(readDeadLockFile(getDeadLockFilePath()));
+        if (data.contains("packages"))
+        {
+            for (const auto pkg : data["packages"])
+            {
+                if (packageName == pkg["name"])
+                {
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            std::cout << "No packages installed in dead.lock file." << endl;
+            return false;
+        }
+    }
+    catch (json::exception &e)
+    {
+        std::cerr << "Error reading json object: " << e.what() << endl;
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Error finding packages in dead.lock file: " << e.what() << endl;
+    }
     return true;
 }
 
