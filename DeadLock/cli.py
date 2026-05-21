@@ -20,6 +20,17 @@ def main():
     # List command
     subparsers.add_parser('list', help='List installed packages')
 
+    # Is package installed command
+    subparsers.add_parser('show', help='Shows details about the package if installed')
+
+    # Get package info command
+    info_parser = subparsers.add_parser('info', help='Gets info about a package from pypi.')
+    info_parser.add_argument('packageName', help='Package Name to get info of.')
+
+    # Uninstall Packages command
+    uninstall_parser = subparsers.add_parser('uninstall', help='Uninstalls package(s) from virtual environment')
+    uninstall_parser.add_argument('packages', nargs='+', help='Package(s) to be uninstalled.')
+
     args = parser.parse_args()
 
     try:
@@ -27,8 +38,8 @@ def main():
 
         if args.command == 'create':
             print(f"Creating project {args.projectName}...")
-            dl.init(args.projectName)
-            
+            dl.create_project(args.projectName)
+
         elif args.command == 'install':
             success = dl.install_packages(args.packages)
             if success:
@@ -53,6 +64,20 @@ def main():
                     print(f"  - {pkg.name} ({pkg.version})")
             else:
                 print("No packages installed")
+        elif args.command == 'show':
+            success = dl.is_installed()
+            if success:
+                print("Package found in dead.lock file.")
+            else:
+                print("Could not find package in dead.lock file")
+                sys.exit(1)
+        elif args.command == 'uninstall':
+            success = dl.uninstall_packages(args.packages)
+            if success:
+                print(f"Successfully uninstalled: {', '.join(args.packages)}")
+            else:
+                print("Uninstallation failed: ", file=sys.stderr)
+                sys.exit(1)
         else:
             parser.print_help()
 

@@ -22,7 +22,7 @@
 #include <dirent.h>
 #endif
 using json = nlohmann::json;
-using namespace std;  // Local to this file only
+using namespace std; // Local to this file only
 
 // Static member initialization
 std::string DeadLock::gProjectName = ".";
@@ -160,10 +160,10 @@ void DeadLock::init(std::string projectName)
 // Check User OS
 #ifdef _WIN32
     _mkdir(projectName.c_str());
-    createVirtualEnvironment(".venv");
+    createVirtualEnvironment(projectName+"/.venv");
 #else
     mkdir(projectName.c_str(), 0755);
-    createVirtualEnvironment(".venv");
+    createVirtualEnvironment(projectName+"/.venv");
 #endif
     userOption();
     // Generate all project files
@@ -697,6 +697,8 @@ std::string DeadLock::getLatestVersion(std::string packageName)
  * This function checks if a virtual environment already exists at the given path,
  * and if not, it creates a new virtual environment using Python's venv module.
  *
+ * @note Currently this function just uses the already present venv module in the python binaries. I am looking for a way to create a virtual environment completely from scratch.
+ * 
  * @param venvPath The path where the virtual environment should be created.
  * @returns `True` if the virtual environment was successfully created or already exists.
  */
@@ -1193,7 +1195,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
     catch (json::exception &e)
     {
         std::cerr << "Error reading JSON in dead.lock:" << e.what() << "\n"
-             << "Regenerate? y/n: ";
+                  << "Regenerate? y/n: ";
         std::string opt;
         std::cin >> opt;
         if (opt == "y")
@@ -1203,7 +1205,7 @@ bool DeadLock::updateDeadLockFile(Package pkg)
                 std::cerr << "Error generating dead.lock file" << endl;
                 return false;
             }
-            deadJSON = json::parse(readDeadLockFile(getDeadLockFilePath())); //This will return only the boilerplate deadlock file
+            deadJSON = json::parse(readDeadLockFile(getDeadLockFilePath())); // This will return only the boilerplate deadlock file
         }
         else
         {
@@ -1232,10 +1234,8 @@ bool DeadLock::updateDeadLockFile(Package pkg)
 bool DeadLock::removeFromDeadLockFile(std::string packageName)
 {
     loadPackages();
-    auto it = find_if(loadedPackages.begin(), loadedPackages.end(), [&packageName](Package &pkg)
-    {
-        return pkg.name = packageName;
-    });
+    auto it = find_if(loadedPackages.begin(), loadedPackages.end(), [&packageName](const Package &pkg)
+                      { return pkg.name == packageName; });
 
     if (it == loadedPackages.end())
     {
@@ -1550,10 +1550,10 @@ void DeadLock::userOption()
     std::vector<std::string> packages;
     int type, option;
     std::cout << "What type of project do you want?\n1) Basic\n"
-            "2) Computer Vision\n"
-            "3) NLP\n"
-            "4) Empty"
-         << endl;
+                 "2) Computer Vision\n"
+                 "3) NLP\n"
+                 "4) Empty"
+              << endl;
     std::cin >> type;
     switch (type)
     {
@@ -1572,7 +1572,7 @@ void DeadLock::userOption()
         break;
     case 2:
         std::cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-             << endl;
+                  << endl;
         std::cin >> option;
         switch (option)
         {
@@ -1615,7 +1615,7 @@ void DeadLock::userOption()
         break;
     case 3:
         std::cout << "With Which library you want to make this project?\n1) TensorFlow\t2) PyTorch\n"
-             << endl;
+                  << endl;
         std::cin >> option;
         switch (option)
         {
@@ -1677,7 +1677,8 @@ void DeadLock::userOption()
  */
 bool DeadLock::isPkgInDeadLock(std::string packageName)
 {
-    try{
+    try
+    {
         json data = json::parse(readDeadLockFile(getDeadLockFilePath()));
         if (data.contains("packages"))
         {

@@ -9,8 +9,9 @@ using namespace std;
 
 // ZIP file structures
 #pragma pack(push, 1)
-struct ZipLocalFileHeader {
-    uint32_t signature;          // 0x04034b50
+struct ZipLocalFileHeader
+{
+    uint32_t signature; // 0x04034b50
     uint16_t version;
     uint16_t flags;
     uint16_t compression;
@@ -23,8 +24,9 @@ struct ZipLocalFileHeader {
     uint16_t extraFieldLength;
 };
 
-struct ZipCentralDirectoryHeader {
-    uint32_t signature;          // 0x02014b50
+struct ZipCentralDirectoryHeader
+{
+    uint32_t signature; // 0x02014b50
     uint16_t versionMadeBy;
     uint16_t versionNeeded;
     uint16_t flags;
@@ -43,8 +45,9 @@ struct ZipCentralDirectoryHeader {
     uint32_t relativeOffset;
 };
 
-struct ZipEndOfCentralDirectory {
-    uint32_t signature;          // 0x06054b50
+struct ZipEndOfCentralDirectory
+{
+    uint32_t signature; // 0x06054b50
     uint16_t diskNumber;
     uint16_t centralDirDisk;
     uint16_t numEntriesThisDisk;
@@ -55,15 +58,16 @@ struct ZipEndOfCentralDirectory {
 };
 #pragma pack(pop)
 
-
 // Structure to represent a package dependency
-struct Package {
+struct Package
+{
     string name;
     string version;
     string source;
     string installDate;
     vector<string> dependencies;
-    bool empty() const {
-        return !name.empty() && !version.empty();
+    bool empty() const
+    {
+        return name.empty() && version.empty();
     }
 };
