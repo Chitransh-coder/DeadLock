@@ -8,5 +8,5 @@
     "zlib",
     "pybind11"
   ],
-  "builtin-baseline": "0cf34c184ce990471435b5b9c92edcf7424930b1"
+  "builtin-baseline": "75cabb002b38ee946bb9e05245c4f984d93a6f3c"
 }
