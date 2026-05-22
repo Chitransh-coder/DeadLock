@@ -3,14 +3,51 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  update-windows:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check existing CMake and Visual Studio info
+        shell: pwsh
+        run: |
+          cmake --version 2>$null || Write-Output 'cmake not found'
+          $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) { & $vswhere -latest -products * -format json | Out-File vsinfo.json; Get-Content vsinfo.json }
+          else { Write-Output 'vswhere not found' }
+
+      - name: Upgrade CMake via Chocolatey
+        shell: pwsh
+        run: choco upgrade cmake --yes
+
+      - name: Locate latest Visual Studio (no hardcoded version)
+        shell: pwsh
+        run: |
+          $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            $instPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+            if ($instPath) { Write-Output "Found Visual Studio at: $instPath" }
+            else { Write-Output 'No Visual Studio with MSBuild component found' }
+          } else {
+            Write-Output 'vswhere not found on runner; relying on preinstalled build tools'
+          }
+
+      - name: Confirm CMake and MSBuild
+        shell: pwsh
+        run: |
+          cmake --version
+          $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) { & $vswhere -latest -requires Microsoft.Component.MSBuild -property installationVersion }
+          msbuild -version 2>$null || dotnet --info
+
   build-and-publish:
+    needs: update-windows
     runs-on: windows-latest
 
     steps:
@@ -22,7 +59,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Bootstrap vcpkg
         shell: pwsh
