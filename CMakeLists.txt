@@ -57,18 +57,3 @@ target_include_directories(deadlock_core PRIVATE
 install(TARGETS deadlock_core
     LIBRARY DESTINATION deadlock
 )
-
-if(WIN32)
-    set(VCPKG_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/vcpkg_installed/x64-windows/bin")
-
-    if(EXISTS "${VCPKG_INSTALL_DIR}/libcurl.dll")
-        install(FILES "${VCPKG_INSTALL_DIR}/libcurl.dll" DESTINATION deadlock)
-    else()
-        message(FATAL_ERROR "CURL library not installed")
-    endif()
-    if(EXISTS "${VCPKG_INSTALL_DIR}/zlib1.dll")
-        install(FILES "${VCPKG_INSTALL_DIR}/zlib1.dll" DESTINATION deadlock)
-    else()
-        message(FATAL_ERROR "ZLIB library not installed")
-    endif()
-endif()
