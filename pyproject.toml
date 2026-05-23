@@ -20,6 +20,7 @@ wheel.cmake = true
 minimum-version = "0.11"
 build-dir = "./build"
 logging.level = "INFO"
+cmake.python-hints = true
 
 [tool.scikit-build.cmake.define]
 CMAKE_TOOLCHAIN_FILE = "vcpkg/scripts/buildsystems/vcpkg.cmake"
