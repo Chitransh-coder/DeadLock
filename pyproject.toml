@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.10", "pybind11>=2.10.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "deadlock"
+name = "deadlock-manager"
 description = 'A Project Manager made for Data scientists'
 readme = "README.md"
 version = "1.0.0"
