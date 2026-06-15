@@ -15,7 +15,7 @@ for dirpath, _, files in os.walk(root):
 
 print('found:', found)
 if not found:
-    print('Built module not found under', root)
+    print('Built module not found under or doesnot exist', root)
     sys.exit(2)
 
 sys.path.insert(0, os.path.dirname(found))
