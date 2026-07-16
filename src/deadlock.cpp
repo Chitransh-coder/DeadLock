@@ -1277,9 +1277,9 @@ bool DeadLock::isPackageInstalled(std::string packageName)
         json jsonData = json::parse(deadlockFileContent);
         if (jsonData.contains("packages"))
         {
-            for (const auto pkg : jsonData["packages"])
+            for (const auto &pkg : jsonData["packages"])
             {
-                if (packageName == pkg["name"])
+                if (packageName == pkg.value("name", ""))
                 {
                     return true;
                 }
@@ -1603,7 +1603,11 @@ void DeadLock::userOption()
 
         default:
             std::cout << "Invalid option chosen, ending operations" << endl;
+#ifdef _WIN32
             _rmdir(gProjectName.c_str());
+#else
+            rmdir(gProjectName.c_str());
+#endif
             exit(-1);
             break;
         }
@@ -1649,7 +1653,11 @@ void DeadLock::userOption()
 
         default:
             std::cout << "Invalid option chosen, ending operations" << endl;
+#ifdef _WIN32
             _rmdir(gProjectName.c_str());
+#else
+            rmdir(gProjectName.c_str());
+#endif
             exit(-1);
             break;
         }
@@ -1663,7 +1671,11 @@ void DeadLock::userOption()
         break;
     default:
         std::cout << "Invalid option chosen, ending operations" << endl;
+#ifdef _WIN32
         _rmdir(gProjectName.c_str());
+#else
+        rmdir(gProjectName.c_str());
+#endif
         exit(-1);
         break;
     }
@@ -1682,9 +1694,9 @@ bool DeadLock::isPkgInDeadLock(std::string packageName)
         json data = json::parse(readDeadLockFile(getDeadLockFilePath()));
         if (data.contains("packages"))
         {
-            for (const auto pkg : data["packages"])
+            for (const auto &pkg : data["packages"])
             {
-                if (packageName == pkg["name"])
+                if (packageName == pkg.value("name", ""))
                 {
                     return true;
                 }
@@ -1704,7 +1716,7 @@ bool DeadLock::isPkgInDeadLock(std::string packageName)
     {
         std::cerr << "Error finding packages in dead.lock file: " << e.what() << endl;
     }
-    return true;
+    return false;
 }
 
 /**
@@ -1718,7 +1730,7 @@ bool DeadLock::uninstallPackages(std::vector<std::string> packages)
 {
     std::cout << "Uninstalling packages" << endl;
     // TODO: Write Implementation
-    return true;
+    return false;
 }
 
 /**

@@ -1,0 +1,219 @@
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 292cc172cacbc28eb2a30d907bfeb0e93a8f4c2fbbab72810ddd148af48e5f4d
+Status: install ok installed
+
+Package: vcpkg-cmake-get-vars
+Version: 2025-05-29
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 50fea25141d358aa22dfddc835a04171deab91a184eb0e977c6d92c023c83393
+Status: install ok installed
+
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 1697ccd87c1717787d9604d21a053c8f77e704cb64d4cc0068332715f3165fe7
+Status: install ok installed
+
+Package: openssl
+Version: 3.6.2
+Depends: vcpkg-cmake, vcpkg-cmake-config, vcpkg-cmake-get-vars
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 3df2ce048d2d3aab2c0c5c5a667600de39d6cb333756abb924d67dec04e7908a
+Description: OpenSSL is an open source project that provides a robust, commercial-grade, and full-featured toolkit for the Transport Layer Security (TLS) and Secure Sockets Layer (SSL) protocols. It is also a general-purpose cryptography library.
+Status: install ok installed
+
+Package: zlib
+Version: 1.3.2
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 57fdde91a94a30216ae7a427c3c5be61d0dc9fcda43626469bdf59ae2dae4c9f
+Description: A compression library
+Status: install ok installed
+
+Package: curl
+Version: 8.20.0
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config, zlib
+Architecture: x64-linux
+Multi-Arch: same
+Abi: b01aa217eefc8479497b2548c9fb68ad5b8ca1d7d4927fc972569599ba3fe995
+Description: A library for transferring data with URLs
+Default-Features: non-http, ssl
+Status: install ok installed
+
+Package: curl
+Feature: non-http
+Architecture: x64-linux
+Multi-Arch: same
+Description: Enables protocols beyond HTTP/HTTPS/HTTP2/HTTP3
+Status: install ok installed
+
+Package: curl
+Feature: openssl
+Depends: openssl
+Architecture: x64-linux
+Multi-Arch: same
+Description: TLS support (OpenSSL)
+Status: install ok installed
+
+Package: curl
+Feature: ssl
+Architecture: x64-linux
+Multi-Arch: same
+Description: Default SSL / TLS implementation.
+Status: install ok installed
+
+Package: sqlite3
+Version: 3.53.1
+Port-Version: 2
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 4b5fa21478305f1aa2b2bfcf6544ffeadb4cbaa082f237fad1b8397c1aea3d3d
+Description: SQLite is a software library that implements a self-contained, serverless, zero-configuration, transactional SQL database engine.
+Default-Features: json1
+Status: install ok installed
+
+Package: sqlite3
+Feature: json1
+Architecture: x64-linux
+Multi-Arch: same
+Description: Enable JSON functionality for sqlite3
+Status: install ok installed
+
+Package: liblzma
+Version: 5.8.3
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 1e5c67d1d6fa1fd13bece69833c2eff29be0c5549698420264d39a9ed89533cf
+Description: Compression library with an API similar to that of zlib.
+Status: install ok installed
+
+Package: vcpkg-make
+Version: 2026-01-01
+Depends: vcpkg-cmake-get-vars
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 8bb45a4451b95f6ac2ee1d334b42346f5048194da4b37814db81b31f08ab0cb8
+Status: install ok installed
+
+Package: libffi
+Version: 3.5.2
+Depends: vcpkg-cmake-get-vars, vcpkg-make
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 8476e6d4658f9497e522e3bed40308ce7aa16283090b1050d6632ae57cdfeb5c
+Description: Portable, high level programming interface to various calling conventions
+Status: install ok installed
+
+Package: libb2
+Version: 0.98.1
+Port-Version: 7
+Depends: vcpkg-make
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 7451c648c67eedc4ff8bd7e89bf1e999981ef2c9a25051541bb6ad62a678ccf3
+Description: C library providing BLAKE2b, BLAKE2s, BLAKE2bp, BLAKE2sp
+Status: install ok installed
+
+Package: expat
+Version: 2.8.1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 83c110dfe2cf87181793f54ade94317bb3a5b82374bc8f9904679efb2bad9ac1
+Description: XML parser library written in C
+Status: install ok installed
+
+Package: bzip2
+Version: 1.0.8
+Port-Version: 6
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 75aa270560f0cd5c7a5f21d97d484819da081a45adf33c70ef0c0e35fa80ffae
+Description: bzip2 is a freely available, patent free, high-quality data compressor. It typically compresses files to within 10% to 15% of the best available techniques (the PPM family of statistical compressors), whilst being around twice as fast at compression and six times faster at decompression.
+Default-Features: tool
+Status: install ok installed
+
+Package: bzip2
+Feature: tool
+Architecture: x64-linux
+Multi-Arch: same
+Description: Builds bzip2 executable
+Status: install ok installed
+
+Package: vcpkg-get-python
+Version: 2025-02-09
+Architecture: x64-linux
+Multi-Arch: same
+Abi: c5867ee185b542ae489b62d851ac73bb3b791073a884762979cb1ed2b156d10f
+Status: install ok installed
+
+Package: libuuid
+Version: 1.0.3
+Port-Version: 17
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 000acf4b3811a17b457cd132f4d04d7551b93290277d5d44d8a5bae0aafc6420
+Description: Universally unique id library
+Status: install ok installed
+
+Package: libiconv
+Version: 1.18
+Port-Version: 4
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 7435516380cab55a2afc1b182bc90895df1d6afd76d0ec76a66023f3915c79a6
+Description: iconv() text conversion.
+    This port installs GNU libiconv if the system C runtime doesn't provide a suitable iconv() implementation.
+Status: install ok installed
+
+Package: gettext-libintl
+Version: 0.22.5
+Port-Version: 4
+Depends: vcpkg-make
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 8a72e24c68176bcbe3de37b14379fbe1ea80f065cbd138d68af5b29b2bad4fa0
+Description: The libintl C library from GNU gettext-runtime.
+Status: install ok installed
+
+Package: python3
+Version: 3.12.13
+Port-Version: 1
+Depends: gettext-libintl, libiconv, libuuid, vcpkg-get-python, vcpkg-make, zlib
+Architecture: x64-linux
+Multi-Arch: same
+Abi: bbba774070a5e9a0ff9699788760654b78328fe7897005cdb4d1c137fb710e4a
+Description: The Python programming language
+Default-Features: extensions
+Status: install ok installed
+
+Package: python3
+Feature: extensions
+Depends: bzip2, expat, libb2, libffi, liblzma, openssl, sqlite3
+Architecture: x64-linux
+Multi-Arch: same
+Description: Allow the build and usage of python extensions. On windows this requires python to be a dynamic library!
+Status: install ok installed
+
+Package: pybind11
+Version: 3.0.1
+Depends: python3, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 013c6813ce2066c6ff2044c50e310db9ccc4ba417e3e6e682b692978d47950b8
+Description: pybind11 is a lightweight header-only library that exposes C++ types in Python and vice versa, mainly to create Python bindings of existing C++ code
+Status: install ok installed
+

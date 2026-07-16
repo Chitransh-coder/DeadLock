@@ -5,6 +5,9 @@
 #include <set>
 #include <queue>
 #include <functional>
+#ifndef _WIN32
+#include <cstdint>
+#endif
 using namespace std;
 
 // ZIP file structures

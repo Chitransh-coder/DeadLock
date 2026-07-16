@@ -24,5 +24,3 @@ cmake.python-hints = true
 
 [tool.scikit-build.cmake.define]
 CMAKE_TOOLCHAIN_FILE = "vcpkg/scripts/buildsystems/vcpkg.cmake"
-VCPKG_TARGET_TRIPLET = "x64-windows"
-VCPKG_HOST_TRIPLET = "x64-windows"

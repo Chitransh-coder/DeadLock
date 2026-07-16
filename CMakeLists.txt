@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 project(DeadLock VERSION 1.0.0)
 
+
 # Define source and include directories
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -18,6 +19,34 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         )
     endif()
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+endif()
+
+set(DeadLock_VCPKG_TRIPLET "")
+if(DEFINED VCPKG_TARGET_TRIPLET AND NOT VCPKG_TARGET_TRIPLET STREQUAL "")
+    set(DeadLock_VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+elseif(WIN32)
+    set(DeadLock_VCPKG_TRIPLET "x64-windows-static")
+elseif(APPLE)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+        set(DeadLock_VCPKG_TRIPLET "arm64-osx")
+    else()
+        set(DeadLock_VCPKG_TRIPLET "x64-osx")
+    endif()
+else()
+    set(DeadLock_VCPKG_TRIPLET "x64-linux")
+endif()
+
+if(DeadLock_VCPKG_TRIPLET)
+    set(DeadLock_VCPKG_PREFIXES
+        "${CMAKE_SOURCE_DIR}/vcpkg_installed/${DeadLock_VCPKG_TRIPLET}"
+        "${CMAKE_BINARY_DIR}/vcpkg_installed/${DeadLock_VCPKG_TRIPLET}"
+    )
+
+    foreach(DeadLock_VCPKG_PREFIX IN LISTS DeadLock_VCPKG_PREFIXES)
+        if(EXISTS "${DeadLock_VCPKG_PREFIX}")
+            list(PREPEND CMAKE_PREFIX_PATH "${DeadLock_VCPKG_PREFIX}")
+        endif()
+    endforeach()
 endif()
 
 find_package(Python COMPONENTS Interpreter Development REQUIRED)

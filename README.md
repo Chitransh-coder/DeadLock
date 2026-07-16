@@ -274,7 +274,10 @@ DeadLock/
 ├── include/               # Header files
 │   ├── deadlock.h        # Main header
 │   ├── structs.h         # Data structures
-├── third_party/          # External dependencies
+├── tests/                 # Test files
+│   ├── py_import_test.py  # Test if Python bindings are working
+│   ├── run_tests.py       # Test runner
+│   └── test_wheel_contents.py  # Test if library is in the wheel file
 └── CMakeLists.txt        # Build configuration
 ```
 
@@ -300,9 +303,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Install system dependencies:**
 
-  **Linux (Ubuntu/Debian):**
+  **Linux:**
 
   ```bash
+  # In DeadLock directory
   git clone https://github.com/Microsoft/vcpkg.git
   ./vcpkg/bootstrap-vcpkg.sh
   ./vcpkg/vcpkg install
@@ -310,7 +314,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
   **Windows:**
 
-  ```bash
+  ```powershell
   # Install vcpkg first
   git clone https://github.com/Microsoft/vcpkg.git
   .\vcpkg\bootstrap-vcpkg.bat

@@ -1,0 +1,5 @@
+#!/home/chitranshsoral/Projects/DeadLock/vcpkg_installed/x64-linux/tools/python3/bin/python3.12
+
+import pydoc
+if __name__ == '__main__':
+    pydoc.cli()
